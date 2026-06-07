@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<!--
+  Origami Dungeon™ — Idea Software Studio © 2026 All rights reserved.
+  Origami Dungeon is a Trademark of Idea Software Studio.
+  Contact: dev@ideasoftware.studio
+
+  ═══════════════════════════════════════════════════════════════════════════
+  🚫 DISABLED-FEATURES REGISTER  —  BINDING POLICY (Mark mandate 2026-05-30)
+  ═══════════════════════════════════════════════════════════════════════════
+  ANY AI that DISABLES, STUBS, NO-OPS, or REMOVES a feature MUST record it HERE,
+  at the TOP of the file, with: what was disabled · WHERE (line/function) · WHY ·
+  DATE · who. DO NOT bury a disable under an inline comment deep in the file — that
+  is how the monster silhouette was lost for 20+ hours (an AI hit the OutlinePass
+  skinning-detachment bug, disabled the pass, and left an inline comment steering
+  every later AI to a fresnel/hologram dead-end). If you disable something, it goes
+  in THIS list so Mark can see + reverse it. No silent kills. No "another AI will
+  handle it" punts without an entry here.
+
+  ── ACTIVE DISABLES (review on sight) ──
+  • Welcome Guide Auto-Aim checkbox — REMOVED 2026-06-03 (Worker C)
+    in js/v8/ui/WelcomeGuide.js cover controls + bind handler. WHAT: removed
+    the visible "Enable Auto-Aim Assistance" checkbox from page 1 per Mark.
+    WHY: the opening page must keep only the Terms agreement and fit cleanly
+    without the extra control. Auto-aim runtime/localStorage support remains
+    intact outside this welcome-page entry point. RESTORE: re-add the checkbox
+    and SET_AUTO_AIM binding only when Mark requests that control back.
+  • Monster-death forced sidepanel close — DISABLED 2026-06-03 (Worker C)
+    in NewOrigami.Panels.html MONSTER_DEATH handler (~14036) and
+    js/v8/ui/PanelsUI.js MONSTER_DEATH handler (~2934). WHAT: removed the
+    death-event `encounter-zone.classList.remove('active')` / immediate avatar
+    clear. WHY: death is a retarget event, not a combat-close event; this was
+    collapsing the sidebars while another live monster was still in front/FOV.
+    RESTORE: only if MONSTER_DEATH is deliberately meant to hide combat UI even
+    when live hostiles remain nearby, otherwise use HIDE_COMBAT.
+  • Welcome Guide SETUP prototype monster rows — REMOVED 2026-06-03 (Worker C)
+    in js/v8/data/EntityCatalog.js MONSTER_CATALOG. WHAT: removed guide-facing
+    rows for Goblin Herald, Imp Assistant, Oni-Baba, and Ninja Skeleton from the
+    SETUP/Monster Codex surface. WHY: Mark mandate says the usable DB must only
+    expose the current live monster set: Yakuza Goblin, Yakuza Imp, and Level 1
+    Boss Supervisor; extra prototype/unmapped names were misleading AI edits.
+    Runtime MapGen/Engine spawning was not changed by this cleanup. RESTORE: add
+    rows back only after the corresponding live model/spawn contract exists.
+  • Melee-while-fleeing — DISABLED 2026-06-02 (Worker C) in tickMonsterAI flee branch
+    (~12163). WHY: Mark's goblin rule is mandatory: a goblin must flee out of its room
+    and go get help before it can ever attack the player. The old flee state still
+    slapped the player in melee range, which violated that rule. RESTORE: re-add the
+    flee-branch melee block only if Mark explicitly allows fleeing monsters to attack.
+  • Melee slash SOUND (assets/sounds/Player/player-attack-slash.mp3) — DISABLED 2026-06-02
+    (Mark, 25x requests: "ungodly annoying buzzing melee sound", worst on the auto-melee
+    loop which re-fires it every ~2.5s idle). Play call commented out at ~7791 (covers BOTH
+    manual + auto melee — both route through that fn). Preload entry ~7388 left (harmless,
+    no play). WHO: Opus. RESTORE: un-comment the _playSfxFile call at ~7791.
+  • Monster silhouette — DISABLED 2026-06-01 (Mark explicit STOP). _buildMonsterHull (~4361)
+    early-returns: no hull, no glow shells; monsters render PLAIN. WHY: the inverted-hull +
+    additive-glow shells produced a persistent white-blue CLOUD on low-poly / scaled-up models
+    (the imp) — even after A-IMP1's scale-relative rewrite (that verify was NUMERIC-ONLY, no live
+    FPV, a false positive). Mark, seeing it cloud AGAIN: "the silhouette you all have is NOT WORKING
+    so STOP USING THAT METHOD." THIS SUPERSEDES the earlier "always-on / 33rd request for the
+    ethereal outline" mandate — do NOT re-enable the shells without Mark's EXPLICIT new ask.
+    BOTH silhouette methods have now failed: the shells cloud on these models; the OutlinePass
+    (below) never rendered. A future rim, if Mark wants one, must avoid both.
+    The OutlinePass approach (stub→real-pass→skinning-flags, v8245-v8247) NEVER rendered:
+    r128 can't run two OutlinePass in one composer + OutlinePass draws skinned meshes in
+    BIND POSE. Diagnostic 39e835a proved the pass was live-but-invisible.
+    The old targeting outlinePass disable for monsters at ~22680 is now MOOT (superseded).
+  • Legacy flat floor wards — REMOVED 2026-05-30 (ASSIGN-001, Worker B, integrated fc18a72).
+    _placeEntranceBanners() + the now-dead _buildBloomDecal() are GONE — the two flat y=0.05
+    "BEWARE WARDS" + "WELCOME" decals z-fought the floor at spawn (Mark's screenshot). Do NOT
+    restore them. The moon-phase ward (_buildBewareBannerDecal / _placeMoonPhaseDecals) is now
+    the SOLE ward and renders unchanged. (_DECAL_TEXT_MAX_PX is now dead — prune at will.)
+  • Glowing eyes — DISABLED (~5564, "removed as requested, another AI will handle").
+    Status: queued for re-enable (M13). Never finished by the "another AI."
+  • Hit-stop — DISABLED (~7501 triggerHitStop no-op, "prevent player locks"). Queued
+    re-enable (M13) as a short hard-capped freeze.
+  • Monster body emissive — DISABLED (~5468, set 0/black). Queued re-enable (M13).
+  • 3D target reticle — RE-ENABLED 2026-06-01 (A-CC1, Claude/Opus-4.8). The reticle MESH
+    was always live, but it painted on _lockedTarget with no LOS check (lingered/painted
+    through walls). Now resolved through CombatOrchestrator.getReticleTarget() (was a null
+    stub, CombatOrchestrator.js ~L217) which gates on alive + not-ally + live LOS, so it
+    visibly locks the auto-selected (cyan RGB(0,2.4,1.8), matches the monster glow) or
+    TAB-locked (red) enemy and HIDES the instant LOS breaks. Engine call ~22899.
+    SUB-ITEM STILL OFF (intentional, NOT a bug): the reticle PointLight (~4639
+    userData.reticleLight:null, dimmed to 0 at ~23018) stays disabled to keep shadows
+    clean — that was a deliberate choice, never a bug, so it is NOT part of this re-enable.
+  • _sidebarOpen — permanently false (Mark mandate 2026-05-28) to kill a combat-
+    breaking auto-attack interval. Sidepanel DISPLAY being re-added (M11) WITHOUT
+    that interval.
+  • Cinematic events (~1141) + PIP anim-capture (~8174) — disabled per MARK's own
+    mandate. Left off unless Mark says otherwise.
+  • BokehPass DOF (~4183) — off by default (perf). Intentional.
+  • Camera trauma shake (the constant combat screen-shake) — DISABLED 2026-06-03 (builder,
+    Mark). WHAT: the per-frame camera-shake OFFSET is forced to 0 at the single apply site
+    in the render loop (the "Camera trauma shake" block, ~23128, inside v8Clock.tick) — was
+    shakeX=(rnd-0.5)*s*0.08 / shakeY=(rnd-0.5)*s*0.06 applied to camera.rotation.y/.x (~23199,
+    ~23237). WHY: Mark — the shake ran/stacked during combat (the ~30 addCameraTrauma() callers:
+    melee, hit-burst, arrows, boulders, spells) and made the screen unreadable; he wants a steady
+    view. The cameraTrauma value still DECAYS (so callers can't accumulate it unbounded) but its
+    visual offset no longer reaches the camera. PISTOL recoil spring, head-bob, dodge-lean, GALE
+    roll and the blackjack pitch are UNCHANGED — only shakeX/shakeY are zeroed. RESTORE: un-comment
+    the two shakeX/shakeY assignment lines in that block (remove the "shakeX=0; shakeY=0;" line).
+
+  ── KNOWN VFX BUG (not a disable — logged 2026-06-01 so it is NOT buried) ──
+  • Imp "cloud" silhouette — the FPV imp renders as a blown-out white-blue CLOUD
+    (Mark screenshot 2026-06-01) that DROWNS the ethereal rim. CAUSE (confirm in fix):
+    the additive GLOW halo (_MONSTER_GLOW_THICKNESS=0.50, MODEL-LOCAL, ~4249-4294) +
+    inverted hull (~4197 / call ~5640) are tuned for the GOBLIN's scale; the B-IMP-SWAP
+    model (imp-animated-new.glb, ~4887 / IMP_MODEL ~6114, Mark 2026-05-31) is authored at
+    a DIFFERENT scale, so the fixed model-local shells + UnrealBloom balloon into a cloud.
+    Was documented ONLY in inline comments before — now on the audit surface.
+    STATUS: RESOLVED 2026-06-01 via A-IMP1 — the hull/glow shells are now WORLD-space rim widths;
+    per-monster material clones bake worldThickness/worldScale and _buildMonsterHull (~4284-4360) runs
+    AFTER scaleToHeight, so the world rim is CONSTANT at any model scale. Imp is back on
+    imp-animated-new.glb (the new model) and renders CRISP (no cloud). Goblin rim UNCHANGED
+    (constants calibrated to the goblin's ~1.275 world scale). Do NOT re-litigate the always-on hull.
+
+  ── A-VFX1 (2026-06-01, integrated): bullet WALL-impact spark+dust REPLACED ──
+  • _spawnBulletWallImpactSpark (~14325) is NO LONGER CALLED — bullet wall hits now punch the SAME
+    fluorescent-hole decal as lodged body wounds (shared _fluorHoleTex, real 3D crater, 0.8x size).
+    Old call site (wall-hit branch ~15462) removed; function left DEFINED (harmless) for re-enable.
+
+  ── FLASHLIGHT (2026-06-01, integrated): backtick (`) MAP→flashlight + persistence ──
+  • Backtick→MAP duplicate (added by 63601f6) is GONE; backtick now calls toggleMagicLantern()
+    (KEY_DOWN handler). MAP unaffected — still on m/M + the MAP action button. New deactivate/toggle
+    fns added (activateMagicLantern was a one-way latch). Flashlight ON-state persists across descent
+    + save/load (magicLanternOn carried in both descent-write sites + restore; fixed the dead
+    _activateMagicLantern typo). Fully independent — no shield-ring / other-feature coupling.
+  ═══════════════════════════════════════════════════════════════════════════
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- NO-CACHE mandate 2026-05-26 — every load fresh from network. -->
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0"/>
+  <meta http-equiv="Pragma" content="no-cache"/>
+  <meta http-equiv="Expires" content="0"/>
+  <meta name="copyright" content="© 2026 Idea Software Studio. All rights reserved."/>
+  <meta name="author" content="Idea Software Studio"/>
+  <meta name="contact" content="dev@ideasoftware.studio"/>
+  <meta name="trademark" content="Origami Dungeon is a Trademark of Idea Software Studio."/>
+  <title>Origami Dungeon — Engine</title>
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Three.js r128 — proven CDN, matches FPV.2 exactly -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Localization tables — exposes window.t, tCard, tMonster, tLog -->
+  <!-- defer: runtime-only consumers (game module is itself deferred) -->
+  <script defer src="js/data/i18n.js"></script>
+  <!-- NewOrigami.Cards.js removed in 541fb95 — card data now lives in data/cards.json + data/loot.json, loaded on boot. -->
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <!-- MeshoptDecoder — required for EXT_meshopt_compression GLBs (Player.A.Walking.glb is meshopt-compressed; ~68% smaller than raw). NOT Draco — Draco is forbidden on this branch (see recovery-bf8a256-nodraco). -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/meshopt_decoder.js"></script>
+  <!-- Post-Processing Pipeline (ported from FPV.2) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/OutlinePass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+  <!-- B015: FXAA anti-aliasing — the composer path ignores renderer antialias -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+  <!-- Tilt-shift / DOF shader (proper WebGL pass, no CSS blur of UI) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/BokehShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/BokehPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/BufferGeometryUtils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
+  <!-- Importmap: lets the modular three (used by USDZLoader below) resolve
+       internal `import from 'three'` references. -->
+  <script type="importmap">
+  { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+  </script>
+  <!-- Procedural .45 pistol model. Replaces the broken USDZ load that was
+       throwing 'texCoord2f primvars:st0' parse errors and pulling in a second
+       Three.js (warning: Multiple instances of Three.js being imported).
+       Hand-built from primitives so it has no file dependency and loads
+       instantly. -->
+  <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+      console.log(`🐉 [ENGINE_ERROR] ${message} at ${source}:${lineno}:${colno}`);
+    };
+    (function buildProceduralPistol(){
+      const R = window.THREE;
+      if (!R) return; // r128 loaded above; should never miss
+      const g = new R.Group();
+      // Materials — gunmetal slide, darker frame, walnut grip
+      const matGun  = new R.MeshStandardMaterial({ color: 0x2a2d33, metalness: 0.85, roughness: 0.32 });
+      const matDark = new R.MeshStandardMaterial({ color: 0x141618, metalness: 0.55, roughness: 0.55 });
+      const matGrip = new R.MeshStandardMaterial({ color: 0x4a2f1c, metalness: 0.10, roughness: 0.78 });
+      const matBrass = new R.MeshStandardMaterial({ color: 0xc09040, metalness: 0.65, roughness: 0.40 });
+
+      // Slide — long top block (gun points along -Z; +Y is up)
+      const slide = new R.Mesh(new R.BoxGeometry(0.36, 0.42, 1.55), matGun);
+      slide.position.set(0, 0.52, 0);
+      g.add(slide);
+      // Slide serrations cosmetic — a single notch ring near the rear
+      const serr = new R.Mesh(new R.BoxGeometry(0.38, 0.06, 0.22), matDark);
+      serr.position.set(0, 0.52, 0.55);
+      g.add(serr);
+      // Front sight
+      const fs = new R.Mesh(new R.BoxGeometry(0.06, 0.10, 0.10), matDark);
+      fs.position.set(0, 0.78, -0.60);
+      g.add(fs);
+      // Rear sight
+      const rs = new R.Mesh(new R.BoxGeometry(0.30, 0.10, 0.10), matDark);
+      rs.position.set(0, 0.78, 0.55);
+      g.add(rs);
+      // Barrel — small cylinder peeking out the front
+      const barrel = new R.Mesh(new R.CylinderGeometry(0.10, 0.10, 0.18, 14), matDark);
+      barrel.rotation.x = Math.PI / 2;
+      barrel.position.set(0, 0.52, -0.86);
+      g.add(barrel);
+      // Frame — under the slide
+      const frame = new R.Mesh(new R.BoxGeometry(0.32, 0.18, 1.05), matGun);
+      frame.position.set(0, 0.22, 0.05);
+      g.add(frame);
+      // Trigger guard — torus segment under the frame
+      const guard = new R.Mesh(new R.TorusGeometry(0.18, 0.04, 8, 16, Math.PI), matDark);
+      guard.rotation.set(Math.PI / 2, 0, Math.PI);
+      guard.position.set(0, 0.02, 0.18);
+      g.add(guard);
+      // Trigger — small box inside the guard
+      const trig = new R.Mesh(new R.BoxGeometry(0.06, 0.16, 0.05), matBrass);
+      trig.position.set(0, 0.06, 0.20);
+      g.add(trig);
+      // Grip — angled walnut box behind the trigger
+      const grip = new R.Mesh(new R.BoxGeometry(0.34, 0.95, 0.46), matGrip);
+      grip.position.set(0, -0.35, 0.45);
+      grip.rotation.x = -0.20; // grip rake
+      g.add(grip);
+      // Mag well plate at base of grip
+      const magBase = new R.Mesh(new R.BoxGeometry(0.36, 0.06, 0.48), matDark);
+      magBase.position.set(0, -0.82, 0.55);
+      magBase.rotation.x = -0.20;
+      g.add(magBase);
+      // Hammer — small spur at rear-top
+      const hammer = new R.Mesh(new R.BoxGeometry(0.10, 0.16, 0.06), matDark);
+      hammer.position.set(0, 0.78, 0.72);
+      g.add(hammer);
+
+      // Recenter group on its own centroid and normalize to ~2.2u silhouette
+      const box = new R.Box3().setFromObject(g);
+      const size = box.getSize(new R.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z) || 1;
+      g.scale.multiplyScalar(2.2 / maxDim);
+      box.setFromObject(g);
+      const c = box.getCenter(new R.Vector3());
+      g.position.sub(c);
+
+      window._pistol45Model = g;
+      console.log('[Pistol-45] procedural model built (no USDZ load)');
+    })();
+  </script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html,body { width:100%; height:100%; overflow:hidden; background:#000; font-family: sans-serif; }
+    canvas { display:block; position:absolute; top:0; left:0; width:100vw; height:100vh; z-index:1; }
+
+    /* WoW Chat Speech Bubble Overlay */
+    #speech-bubble-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1000;
+      overflow: hidden;
+    }
+    @keyframes etherealFloat {
+      0% { transform: translate(-50%, -100%) perspective(1000px) rotateX(10deg) rotateY(-3deg) translateY(0); }
+      50% { transform: translate(-50%, -100%) perspective(1000px) rotateX(6deg) rotateY(3deg) translateY(-10px) scale(1.02); }
+      100% { transform: translate(-50%, -100%) perspective(1000px) rotateX(10deg) rotateY(-3deg) translateY(0); }
+    }
+    .wow-chat-bubble {
+      position: absolute;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.6));
+      backdrop-filter: blur(16px) saturate(200%);
+      -webkit-backdrop-filter: blur(16px) saturate(200%);
+      border: 1.5px solid rgba(192, 250, 224, 0.4);
+      border-radius: 14px;
+      padding: 12px 18px;
+      max-width: 280px;
+      min-width: 160px;
+      color: #ffffff;
+      font-family: 'Outfit', 'Inter', sans-serif;
+      font-size: 13.5px;
+      font-weight: 700;
+      line-height: 1.45;
+      text-align: center;
+      box-shadow: 
+        0 15px 35px rgba(0, 0, 0, 0.65), 
+        0 0 25px rgba(124, 224, 184, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+      transform-style: preserve-3d;
+      pointer-events: none;
+      transition: opacity 0.25s ease-out;
+      opacity: 0;
+      animation: etherealFloat 3s ease-in-out infinite;
+      z-index: 1001;
+    }
+    .wow-chat-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%) rotate(45deg);
+      width: 12px;
+      height: 12px;
+      background: rgba(30, 41, 59, 0.6);
+      border-right: 1.5px solid rgba(192, 250, 224, 0.4);
+      border-bottom: 1.5px solid rgba(192, 250, 224, 0.4);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      z-index: -1;
+    }
+    .wow-chat-bubble::before {
+      display: none;
+    }
+    .ethereal-kanji {
+      display: block;
+      pointer-events: none;
+      font-size: 11px;
+      font-weight: 500;
+      color: #d8b4fe;
+      text-shadow: 0 0 6px rgba(216, 180, 254, 0.5);
+      margin-top: 6px;
+      font-style: italic;
+      letter-spacing: 0.5px;
+    }
+
+
+    /* PIP cinematic frame — wraps the two canvases (2D map + WebGL FPV cam) */
+    #pip-frame {
+      display: none; /* Hidden: replaced by #moondial-wrapper in Panels.html */
+      position:fixed; top:0; left:0;
+      width:160px; height:160px;
+      z-index:98; border-radius:50%;
+      cursor:pointer;
+      transition:transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow:
+        0 0 0 2px rgba(124,224,184,0.25),
+        0 8px 28px rgba(0,0,0,0.7),
+        inset 0 0 0 1px rgba(255,255,255,0.06);
+      overflow:hidden;
+    }
+    #pip-frame:hover {
+      transform:scale(1.06);
+      box-shadow:
+        0 0 0 2px rgba(124,224,184,0.6),
+        0 12px 36px rgba(0,0,0,0.8),
+        0 0 28px rgba(124,224,184,0.45);
+    }
+    /* Both canvases stack and fill the frame; opacity-crossfaded by JS. */
+    #pip-frame canvas {
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      border-radius:50%;
+      transition:opacity 0.32s ease;
+    }
+    /* Cinematic overlays */
+    .pip-overlay {
+      position:absolute; inset:0; pointer-events:none;
+      border-radius:50%; overflow:hidden;
+    }
+    /* Scanlines + soft lens vignette */
+    .pip-overlay::before {
+      content:''; position:absolute; inset:0; border-radius:50%;
+      background:
+        radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.55) 100%),
+        repeating-linear-gradient(0deg,
+          rgba(0,0,0,0)   0px,
+          rgba(0,0,0,0)   2px,
+          rgba(0,0,0,0.10) 3px);
+      mix-blend-mode:multiply;
+    }
+    /* Glass shimmer highlight (top-left lens reflection) */
+    .pip-overlay::after {
+      content:''; position:absolute; inset:0; border-radius:50%;
+      background:radial-gradient(ellipse 38% 22% at 28% 22%,
+        rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 70%);
+    }
+    /* REC dot (pulsing red) */
+    .pip-rec {
+      position:absolute; top:10%; right:14%;
+      display:flex; align-items:center; gap:4px;
+      font:700 8px/1 'SF Mono','Inter',monospace;
+      color:rgba(255,82,82,0.95);
+      letter-spacing:1.3px;
+      text-shadow:0 0 6px rgba(255,82,82,0.65);
+      pointer-events:none;
+    }
+    .pip-rec-dot {
+      width:6px; height:6px; border-radius:50%;
+      background:#ff5252;
+      box-shadow:0 0 6px rgba(255,82,82,0.9), 0 0 12px rgba(255,82,82,0.5);
+      animation:pipRecPulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pipRecPulse {
+      0%,100% { opacity:1;   transform:scale(1); }
+      50%     { opacity:0.35; transform:scale(0.85); }
+    }
+    /* Cinematic top/bottom bars (only show in FPV-cam mode via .cam-mode) */
+    .pip-cinebar {
+      position:absolute; left:0; right:0; height:11%;
+      background:linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(0,0,0,0.55));
+      opacity:0; transition:opacity 0.4s ease;
+      pointer-events:none;
+    }
+    .pip-cinebar.top    { top:0; }
+    .pip-cinebar.bottom { bottom:0; transform:scaleY(-1); }
+    #pip-frame.cam-mode .pip-cinebar { opacity:1; }
+    /* Center reticle crosshair (faint) */
+    .pip-reticle {
+      position:absolute; top:50%; left:50%;
+      width:18px; height:18px; transform:translate(-50%,-50%);
+      pointer-events:none; opacity:0.55;
+    }
+    .pip-reticle::before, .pip-reticle::after {
+      content:''; position:absolute; background:rgba(255,255,255,0.7);
+      box-shadow:0 0 4px rgba(255,255,255,0.4);
+    }
+    .pip-reticle::before { left:50%; top:0; bottom:0; width:1px; transform:translateX(-50%); }
+    .pip-reticle::after  { top:50%; left:0; right:0; height:1px; transform:translateY(-50%); }
+    /* Hide reticle in 2D-map mode (only show on cam) */
+    #pip-frame:not(.cam-mode) .pip-reticle { opacity:0; }
+    /* Frame-edge micro chromatic aberration */
+    #pip-frame::after {
+      content:''; position:absolute; inset:0; border-radius:50%;
+      box-shadow:
+        inset 0 0 0 1px rgba(124,224,184,0.18),
+        inset 0 0 22px rgba(0,0,0,0.55);
+      pointer-events:none;
+    }
+
+    /* Legacy id kept for compatibility but de-styled (real styling on #pip-frame now) */
+    #pip-canvas {
+      position:absolute;
+      width:100%; height:100%;
+      border-radius:50%;
+      pointer-events:auto; cursor:pointer; overflow:hidden; display:none;
+      transition:transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow:0 0 0 2px rgba(124,224,184,0.25), 0 8px 24px rgba(0,0,0,0.55);
+    }
+
+    /* Fullscreen Map Modal — opens on PIP click */
+    #fs-map-overlay {
+      position:fixed; inset:0; z-index:9999; display:none;
+      background:radial-gradient(ellipse at center, rgba(20,18,14,0.95) 0%, rgba(8,6,4,0.98) 100%);
+      -webkit-backdrop-filter:blur(8px);
+      backdrop-filter:blur(8px);
+      align-items:center; justify-content:center;
+      flex-direction:column; gap:18px;
+    }
+    #fs-map-overlay.open { display:flex; }
+    #fs-map-canvas {
+      width:min(86vmin,860px); height:min(86vmin,860px);
+      border-radius:24px;
+      background:#1a1d22;
+      box-shadow:
+        0 30px 90px rgba(0,0,0,0.85),
+        0 0 0 1px rgba(124,224,184,0.18),
+        inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+    
+    /* Utility classes for initial states */
+    .opacity-0 { opacity: 0; }
+    .width-0 { width: 0%; }
+    #fs-map-title {
+      font-family:'Inter','Segoe UI',sans-serif;
+      letter-spacing:6px; font-weight:700; font-size:11px;
+      color:#7ce0b8; text-transform:uppercase;
+      text-shadow:0 0 14px rgba(124,224,184,0.5);
+    }
+    #fs-map-hint {
+      font-family:'SF Mono',monospace; font-size:10px; color:#5c6470;
+      letter-spacing:2px;
+    }
+    #fs-map-close {
+      position:absolute; top:24px; right:28px;
+      width:46px; height:46px; border-radius:50%;
+      background:#1a1d22; border:none; cursor:pointer;
+      color:#a8b0bb; font-size:20px; font-weight:700;
+      box-shadow:6px 6px 14px rgba(0,0,0,0.6),-4px -4px 12px rgba(255,255,255,0.025);
+      transition:transform 0.12s ease;
+    }
+    #fs-map-close:hover { transform:scale(1.08); color:#ff6b7a; }
+    #fs-map-close:active { box-shadow:inset 3px 3px 6px rgba(0,0,0,0.6),inset -2px -2px 4px rgba(255,255,255,0.03); }
+
+    /* Floating Combat Text */
+    #fct-container {
+      position:absolute; top:0; left:0; width:100%; height:100%;
+      pointer-events:none; z-index:5000; overflow:hidden;
+    }
+    .combat-dmg-text {
+      position:absolute;
+      font-family:'Impact','Arial Black',sans-serif; font-weight:900;
+      pointer-events:none;
+      text-shadow:2px 2px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,3px 3px 5px rgba(0,0,0,0.8);
+      animation:dmgFloat 1.2s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+      opacity:1;
+      letter-spacing:0.04em;
+    }
+    @keyframes dmgFloat {
+      0%   { transform:translate(-50%,-20%) scale(0.1) rotate(-10deg); opacity:0; }
+      15%  { transform:translate(-50%,-80%) scale(1.4) rotate(5deg); opacity:1; }
+      30%  { transform:translate(-50%,-50%) scale(1.0) rotate(0deg); opacity:1; }
+      70%  { transform:translate(-50%,-70%) scale(1.0); opacity:1; }
+      100% { transform:translate(-50%,-120%) scale(1.2); opacity:0; }
+    }
+    /* ── WoW-style themed combat text ─────────────────────────────────── */
+    /* HIT (green): player damages a monster — matches the SLASH / MELEE
+       card palette. Numbers feel "good" — saturated lime green with a
+       deeper green glow. Uses the standard dmgFloat keyframes. */
+    .fct-hit {
+      color:#7cff5a;
+      font-size:clamp(38px,7.5vmin,72px);
+      text-shadow:
+        0 0 12px rgba(80,255,40,0.85),
+        0 0 24px rgba(40,180,20,0.55),
+        2px 2px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000;
+    }
+    .fct-hit.fct-crit {
+      color:#ffe066;
+      font-size:clamp(58px,11vmin,108px);
+      text-shadow:
+        0 0 16px rgba(255,210,40,0.95),
+        0 0 32px rgba(255,140,0,0.7),
+        2px 2px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000;
+      animation-name:dmgFloatCrit;
+    }
+    @keyframes dmgFloatCrit {
+      0%   { transform:translate(-50%,-20%) scale(0.1) rotate(-18deg); opacity:0; }
+      18%  { transform:translate(-50%,-80%) scale(1.85) rotate(7deg); opacity:1; }
+      32%  { transform:translate(-50%,-55%) scale(1.25) rotate(-3deg); opacity:1; }
+      75%  { transform:translate(-50%,-75%) scale(1.30) rotate(0deg); opacity:1; }
+      100% { transform:translate(-50%,-140%) scale(1.45); opacity:0; }
+    }
+    /* DAMAGE (red): a monster damages the player. Centred on screen, BIG. */
+    .fct-damage {
+      color:#ff2a2a;
+      font-size:clamp(56px,11vmin,96px);
+      text-shadow:
+        0 0 18px rgba(255,30,30,0.95),
+        0 0 36px rgba(180,0,0,0.7),
+        3px 3px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000;
+    }
+    /* MISS / DODGE (gray): nobody got hurt. Cooler tone, slightly smaller,
+       slower fade so the player reads "miss" clearly. */
+    .fct-miss {
+      color:#cfd5d8;
+      font-size:clamp(34px,6.5vmin,60px);
+      text-shadow:
+        0 0 10px rgba(200,210,220,0.65),
+        2px 2px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000;
+      animation-name:dmgFloatMiss;
+    }
+    @keyframes dmgFloatMiss {
+      0%   { transform:translate(-50%,-30%) scale(0.4); opacity:0; }
+      20%  { transform:translate(-50%,-60%) scale(1.0); opacity:0.95; }
+      75%  { transform:translate(-50%,-70%) scale(1.0); opacity:0.95; }
+      100% { transform:translate(-50%,-110%) scale(0.9); opacity:0; }
+    }
+    /* Elemental flavours — use card-deck palette so colours feel consistent
+       with the loot cards (FIRE orange, WATER blue, EARTH brown, WIND mint,
+       VOID purple). Element prefix overrides .fct-hit's base color. */
+    .fct-el-FIRE  { color:#ff8a3a; text-shadow:0 0 14px rgba(255,120,30,0.95),0 0 28px rgba(200,60,0,0.6),2px 2px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000; }
+    .fct-el-WATER { color:#5ec4ff; text-shadow:0 0 14px rgba(80,180,255,0.95),0 0 28px rgba(20,80,200,0.6),2px 2px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000; }
+    .fct-el-EARTH { color:#d9a164; text-shadow:0 0 14px rgba(220,160,90,0.95),0 0 28px rgba(120,70,20,0.6),2px 2px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000; }
+    .fct-el-WIND  { color:#a8ffd6; text-shadow:0 0 14px rgba(160,255,200,0.95),0 0 28px rgba(40,180,140,0.6),2px 2px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000; }
+    .fct-el-VOID  { color:#c587ff; text-shadow:0 0 14px rgba(190,120,255,0.95),0 0 28px rgba(80,20,150,0.6),2px 2px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000; }
+
+    /* Goblin Slash Hit Overlay */
+    #slash-overlay {
+      position:absolute; top:0; left:0; width:100%; height:100%;
+      pointer-events:none; z-index:4999; overflow:hidden;
+    }
+    /* ── Melee VFX overlays ────────────────────────────────────── */
+    .slash-mark {
+      position:absolute; top:50%; left:50%; width:5px; border-radius:2px;
+      background:linear-gradient(180deg,#ffffff 0%,#ff2200 40%,rgba(180,0,0,0) 100%);
+      box-shadow:0 0 14px 4px rgba(255,60,0,0.7),0 0 4px rgba(255,255,255,0.6);
+      transform-origin:top center;
+      animation:slashDrop 0.42s cubic-bezier(0.18,0.89,0.32,1.1) forwards;
+    }
+    @keyframes slashDrop {
+      0%   { opacity:0; transform:translate(-50%,-50%) scaleY(0) rotate(var(--r)); }
+      12%  { opacity:1; transform:translate(-50%,-50%) scaleY(1) rotate(var(--r)); }
+      55%  { opacity:0.85; }
+      100% { opacity:0; transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty))) scaleY(1.15) rotate(var(--r)); }
+    }
+    /* Thrust needle — single fast forward spike */
+    .thrust-mark {
+      position:absolute; top:50%; left:50%; width:3px; border-radius:2px;
+      background:linear-gradient(180deg,rgba(180,220,255,0) 0%,#88ccff 30%,#ffffff 55%,rgba(120,180,255,0) 100%);
+      box-shadow:0 0 18px 6px rgba(100,180,255,0.8);
+      transform-origin:center center;
+      animation:thrustShot 0.3s ease-out forwards;
+    }
+    @keyframes thrustShot {
+      0%   { opacity:0; height:20px; transform:translate(-50%,-50%) rotate(var(--r)) scaleY(0.2); }
+      10%  { opacity:1; }
+      70%  { opacity:0.9; height:var(--h); transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty))) rotate(var(--r)) scaleY(1); }
+      100% { opacity:0; }
+    }
+    /* Giant screen-wide slash — sweeps across the entire viewport so the
+       player feels their swing land even in the middle of a swarm. */
+    .slash-mark-screen {
+      position:absolute; top:50%; left:-12vw;
+      width: 130vw; height: 38px; border-radius: 19px;
+      background:linear-gradient(90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.35) 8%,
+        #ffffff 18%,
+        #fff2c0 30%,
+        #ff8a30 50%,
+        #ff2200 70%,
+        rgba(120,0,0,0) 100%);
+      box-shadow:0 0 38px 10px rgba(255,140,40,0.65),
+                 0 0 14px 4px rgba(255,255,255,0.85);
+      transform-origin:center center;
+      animation:slashScreen 0.45s cubic-bezier(0.18,0.89,0.32,1.05) forwards;
+      pointer-events:none;
+      mix-blend-mode: screen;
+      will-change: transform, opacity;
+    }
+    @keyframes slashScreen {
+      0%   { opacity:0; transform:translate(-65%,-50%) rotate(var(--r,-22deg)) scaleY(0.25); }
+      18%  { opacity:1; transform:translate(-50%,-50%) rotate(var(--r,-22deg)) scaleY(1.2); }
+      55%  { opacity:0.95; transform:translate(-30%,-50%) rotate(var(--r,-22deg)) scaleY(1.0); }
+      100% { opacity:0; transform:translate(60%,-50%) rotate(var(--r,-22deg)) scaleY(0.7); }
+    }
+
+    /* Heavy arc — thick sweeping blades */
+    .heavy-mark {
+      position:absolute; top:50%; left:50%; width:10px; border-radius:5px;
+      background:linear-gradient(180deg,#fffde0 0%,#ffcc00 35%,#ff6600 70%,rgba(200,80,0,0) 100%);
+      box-shadow:0 0 22px 8px rgba(255,180,0,0.75),0 0 6px rgba(255,255,200,0.8);
+      transform-origin:top center;
+      animation:heavyDrop 0.55s cubic-bezier(0.12,0.85,0.25,1.1) forwards;
+    }
+    @keyframes heavyDrop {
+      0%   { opacity:0; transform:translate(-50%,-50%) scaleY(0) rotate(var(--r)); }
+      10%  { opacity:1; transform:translate(-50%,-50%) scaleY(1) rotate(var(--r)); }
+      100% { opacity:0; transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty))) scaleY(1.2) rotate(var(--r)); }
+    }
+    /* Shield disc glow */
+    .shield-overlay {
+      position:absolute; top:50%; left:50%; width:340px; height:340px;
+      border-radius:50%; pointer-events:none;
+      transform:translate(-50%,-50%);
+      background:radial-gradient(ellipse at center,rgba(80,140,255,0.22) 0%,rgba(40,80,220,0.12) 55%,transparent 75%);
+      border:2px solid rgba(120,180,255,0.55);
+      box-shadow:0 0 40px 12px rgba(80,140,255,0.35), inset 0 0 30px rgba(120,180,255,0.2);
+      animation:shieldPulse 0.45s ease-out forwards;
+      z-index:4990;
+    }
+    @keyframes shieldPulse {
+      0%   { opacity:0; transform:translate(-50%,-50%) scale(0.5); }
+      25%  { opacity:1; transform:translate(-50%,-50%) scale(1.05); }
+      60%  { opacity:0.9; transform:translate(-50%,-50%) scale(1.0); }
+      100% { opacity:0.7; }
+    }
+    .shield-overlay.fading { animation:shieldFade 0.3s ease-in forwards; }
+    @keyframes shieldFade { to { opacity:0; transform:translate(-50%,-50%) scale(1.15); } }
+
+    /* Blood vignette */
+    #blood-vignette {
+      position:absolute; top:0; left:0; width:100%; height:100%;
+      pointer-events:none; z-index:4998; opacity:0; transition:opacity 0.08s ease-out;
+      background:radial-gradient(ellipse at center,transparent 50%,rgba(200,0,0,0.55) 100%);
+    }
+    #blood-vignette.active { opacity:1; }
+
+    /* Scene vignette — always-on darkening at the edges. +50% darker than the
+       prior soft vignette (alpha lifted, falloff tightened) so the playable
+       region feels lit-by-lantern and the periphery gets that cinematic dark. */
+    #scene-vignette {
+      position:absolute; top:0; left:0; width:100%; height:100%;
+      pointer-events:none; z-index:4990;
+      background:
+        radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.85) 100%);
+    }
+
+    /* Interaction prompt */
+    #interaction-prompt {
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      background:rgba(0,0,0,0.8); color:white; padding:15px 30px; border-radius:8px;
+      border:1px solid #ffd700; font-weight:bold; font-size:1.2rem;
+      z-index:80; display:none; pointer-events:none;
+    }
+
+    /* Moon phase label — ethereal glow */
+    #moonphase-label {
+      position:absolute; top:46px; left:50%; transform:translateX(-50%);
+      color:#e8f6ff; font-family:monospace; font-size:0.78rem; font-weight:700;
+      letter-spacing:1.4px; z-index:90; pointer-events:none;
+      text-shadow:
+        0 0 4px  rgba(220,240,255,0.95),
+        0 0 10px rgba(170,210,255,0.85),
+        0 0 22px rgba(120,180,255,0.65),
+        0 0 36px rgba(80,140,255,0.45);
+      animation: moonpulse 4.2s ease-in-out infinite;
+    }
+    /* Ethereal graphic shape representing the moon phase */
+    #moonphase-graphic {
+      position:absolute; top:62px; left:50%; transform:translateX(-50%);
+      font-size:1.55rem; z-index:90; pointer-events:none;
+      filter: drop-shadow(0 0 8px rgba(170,210,255,0.85)) drop-shadow(0 0 16px rgba(120,180,255,0.55));
+      animation: moonpulse 4.2s ease-in-out infinite;
+    }
+    /* Kanji moonphase — magical green-cyan bloom */
+    #moonphase-kanji {
+      position:absolute; top:92px; left:50%; transform:translateX(-50%);
+      color:#dffff0; font-family:'Noto Serif JP', 'Hiragino Mincho ProN', serif;
+      font-size:1.15rem; font-weight:800;
+      letter-spacing:3px; z-index:90; pointer-events:none;
+      text-shadow:
+        0 0 5px  rgba(210,255,235,0.95),
+        0 0 14px rgba(120,255,200,0.85),
+        0 0 26px rgba(80,230,180,0.6),
+        0 0 44px rgba(60,200,160,0.4);
+      animation: kanjipulse 5.6s ease-in-out infinite;
+    }
+    @keyframes moonpulse {
+      0%,100% { text-shadow:
+        0 0 4px  rgba(220,240,255,0.95),
+        0 0 10px rgba(170,210,255,0.85),
+        0 0 22px rgba(120,180,255,0.6),
+        0 0 36px rgba(80,140,255,0.4); }
+      50%     { text-shadow:
+        0 0 6px  rgba(235,250,255,1.0),
+        0 0 16px rgba(190,225,255,0.95),
+        0 0 32px rgba(140,200,255,0.8),
+        0 0 52px rgba(100,170,255,0.6); }
+    }
+    @keyframes kanjipulse {
+      0%,100% { text-shadow:
+        0 0 5px  rgba(210,255,235,0.9),
+        0 0 14px rgba(120,255,200,0.8),
+        0 0 26px rgba(80,230,180,0.55),
+        0 0 44px rgba(60,200,160,0.3); }
+    }
+
+
+  </style>
+</head>
+<body>
+
+
+
+  <!-- VFX Layers -->
+  <div id="fct-container"></div>
+  <div id="slash-overlay"></div>
+  <div id="scene-vignette"></div>
+  <div id="blood-vignette"></div>
+  <div id="speech-bubble-overlay"></div>
+  <div id="interaction-prompt">Press E to Interact</div>
+  <div id="moonphase-label">NEW MOON</div>
+  <div id="moonphase-graphic">🌑</div>
+  <div id="moonphase-kanji">新月</div>
+  
+
+
+  <!-- PIP cinematic cam frame: 2D map (FPV mode) + live FPV WebGL (topdown mode) -->
+  <div id="pip-frame">
+    <canvas id="pip-canvas"     width="1024" height="1024"></canvas>
+    <canvas id="pip-fpv-canvas" width="1024" height="1024" class="opacity-0"></canvas>
+    <div class="pip-overlay">
+      <div class="pip-cinebar top"></div>
+      <div class="pip-cinebar bottom"></div>
+      <div class="pip-reticle"></div>
+      <div class="pip-rec"><span class="pip-rec-dot"></span>REC</div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Top-Down Map Modal -->
+  <div id="fs-map-overlay">
+    <div id="fs-map-title">CASTLE — TOP DOWN</div>
+    <canvas id="fs-map-canvas" width="1024" height="1024"></canvas>
+    <div id="fs-map-hint">CLICK MINIMAP OR PRESS M / ESC TO CLOSE</div>
+    <button id="fs-map-close" aria-label="Close map">×</button>
+  </div>
+
+
+  <!-- Error overlay -->
+  <div id="error-overlay" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(220,53,69,0.9); color:#fff; padding:8px 16px; border-radius:4px; font-family:monospace; font-size:12px; z-index:10000; border:1px solid #ff4444; box-shadow:0 4px 12px rgba(0,0,0,0.5); pointer-events:none; letter-spacing:1px;"></div>
+<script type="module" src="./engine8.main.js?v=sc1"></script>
+</body>
+</html>

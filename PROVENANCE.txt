@@ -1,0 +1,9 @@
+Origami-Distribution — DMZ provenance (GOLD re-cut · 2026-06-07 · Worker E)
+DEV BASE: f964c87 (current clean DEV gold; supersedes 5ece287). Includes: B fixes (wall-collision/PIP/load-bar 6896ed8),
+  gitVersion boot fix (db28fe7), L3 localization + donation + neumorphic panels (52de52b), rogue-C containment (f964c87).
+  EXCLUDES the broken 381c54f i18n (verified not in history).
+ARMOR: SC-1 externalize + SC-2 minify + SC-3 obfuscate (8 LIGHT hot-path / 14 STRONG; controlFlow/anti-debug/self-defending OFF).
+PRUNED: dead readable assets/js + model backups (0 live refs). Build tooling (pipeline/) excluded.
+gitVersion.js: regenerated ASCII-clean. SC-5 integrity: deferred (beta).
+VALIDATION: verify-sc.sh GREEN + new TESTER seat real verdict required before cross.
+cut by: Worker E (sole controller)
