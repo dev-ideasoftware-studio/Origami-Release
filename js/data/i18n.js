@@ -17,6 +17,8 @@ window.OrigamiI18n = {
   // ── English (default) ────────────────────────────────────────────────────
   en: {
     ui: {
+      // Card category pills — localized on the deck/hand/loot cards (2026-06-12)
+      "cardcat_melee": "MELEE", "cardcat_ranged": "RANGED", "cardcat_spell": "SPELL", "cardcat_spells": "SPELLS", "cardcat_item": "ITEM", "cardcat_wager": "WAGER", "cardcat_gaming": "GAMING", "cardcat_gold": "GOLD", "cardcat_out": "OUT",
       // ── L3 wg.*/loot.* merged 2026-06-07 (data-only, vetted /tmp/l3keys.json, en) ──
       "wg.role-pistoleer-name": "GANGSTER",
       "wg.role-pistoleer-pill": "PISTOLEER",
@@ -162,6 +164,7 @@ window.OrigamiI18n = {
       "dist-unit": "ft",
       "btn-wager": "Wager",
       "btn-quick-gamble": "Fast Bet",
+      "btn-greeting": "Greeting",
       "btn-parley": "Came to Play",
       "btn-hide": "Hide",
       "btn-attack": "Attack",
@@ -526,6 +529,8 @@ window.OrigamiI18n = {
   // ── Japanese (Modern / Furigana-friendly) ────────────────────────────────
   ja: {
     ui: {
+      // Card category pills (JA, 2026-06-12)
+      "cardcat_melee": "近接", "cardcat_ranged": "遠隔", "cardcat_spell": "呪文", "cardcat_spells": "呪文", "cardcat_item": "道具", "cardcat_wager": "賭け", "cardcat_gaming": "賭博", "cardcat_gold": "金貨", "cardcat_out": "品切",
       // ── L3 wg.*/loot.* merged 2026-06-07 (data-only, vetted /tmp/l3keys.json, ja) ──
       "wg.role-pistoleer-name": "ガンマン",
       "wg.role-pistoleer-pill": "拳銃使い",
@@ -670,6 +675,7 @@ window.OrigamiI18n = {
       "dist-unit": "m",
       "btn-wager": "賭ける",
       "btn-quick-gamble": "即賭け",
+      "btn-greeting": "挨拶",
       "btn-parley": "遊びに来た",
       "btn-hide": "隠れる",
       "btn-attack": "攻撃",

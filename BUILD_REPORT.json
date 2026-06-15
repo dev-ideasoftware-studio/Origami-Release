@@ -1,172 +1,152 @@
 {
-  "provenance": {
-    "baseline": "gold-f964c87",
-    "sha": "f964c87",
-    "note": "re-cut from current clean DEV gold f964c87 (B fixes + load-bar + L3 i18n + C-containment; broken 381c54f NOT included). sc3 hardcode corrected by E.",
-    "timestamp": "2026-06-07T21:21:32.973Z"
-  },
-  "totals": {
-    "totalFiles": 22,
-    "lightFiles": 8,
-    "strongFiles": 14,
-    "srcBytes": 940463,
-    "outBytes": 1240114,
-    "ratio": 1.319
-  },
-  "files": [
-    {
-      "file": "engine8.main.js",
-      "profile": "LIGHT",
-      "srcBytes": 451277,
-      "outBytes": 567237,
-      "ratio": 1.257
-    },
+  "builtAtNote": "timestamp stamped by caller — build.mjs is deterministic (seed=7)",
+  "hardened": [
     {
       "file": "js/v8/OniBaba8.js",
-      "profile": "LIGHT",
-      "srcBytes": 36174,
-      "outBytes": 44516,
-      "ratio": 1.231
+      "src": 95.2,
+      "out": 52.4
+    },
+    {
+      "file": "js/v8/ai/MonsterAI.constructor.js",
+      "src": 22.4,
+      "out": 11.1
+    },
+    {
+      "file": "js/v8/ai/MonsterAI.engineAdapter.js",
+      "src": 5.5,
+      "out": 3.6
     },
     {
       "file": "js/v8/audio/AudioSystem.js",
-      "profile": "STRONG",
-      "srcBytes": 7040,
-      "outBytes": 9647,
-      "ratio": 1.37
+      "src": 14.2,
+      "out": 9.6
     },
     {
       "file": "js/v8/combat/CardExecutor.js",
-      "profile": "LIGHT",
-      "srcBytes": 4554,
-      "outBytes": 5216,
-      "ratio": 1.145
+      "src": 14.6,
+      "out": 6.3
     },
     {
       "file": "js/v8/combat/CombatOrchestrator.js",
-      "profile": "LIGHT",
-      "srcBytes": 8348,
-      "outBytes": 9729,
-      "ratio": 1.165
+      "src": 20.2,
+      "out": 10.8
     },
     {
       "file": "js/v8/combat/Targeting.js",
-      "profile": "LIGHT",
-      "srcBytes": 594,
-      "outBytes": 616,
-      "ratio": 1.037
+      "src": 0.5,
+      "out": 1.7
     },
     {
       "file": "js/v8/core/CardDatabase.js",
-      "profile": "STRONG",
-      "srcBytes": 14861,
-      "outBytes": 20419,
-      "ratio": 1.374
+      "src": 21.4,
+      "out": 19.6
     },
     {
       "file": "js/v8/core/Clock.js",
-      "profile": "LIGHT",
-      "srcBytes": 600,
-      "outBytes": 677,
-      "ratio": 1.128
+      "src": 1.5,
+      "out": 1.9
     },
     {
       "file": "js/v8/core/GameState.js",
-      "profile": "STRONG",
-      "srcBytes": 716,
-      "outBytes": 2280,
-      "ratio": 3.184
+      "src": 1.6,
+      "out": 2.1
     },
     {
       "file": "js/v8/core/Renderer.js",
-      "profile": "LIGHT",
-      "srcBytes": 6301,
-      "outBytes": 7496,
-      "ratio": 1.19
+      "src": 17,
+      "out": 10.7
     },
     {
       "file": "js/v8/data/EntityCatalog.js",
-      "profile": "STRONG",
-      "srcBytes": 5634,
-      "outBytes": 9147,
-      "ratio": 1.624
+      "src": 7.2,
+      "out": 8.6
     },
     {
       "file": "js/v8/entities/BlackjackTable.js",
-      "profile": "STRONG",
-      "srcBytes": 2754,
-      "outBytes": 5200,
-      "ratio": 1.888
+      "src": 7.4,
+      "out": 4.7
     },
     {
       "file": "js/v8/entities/BowModelBuilder.js",
-      "profile": "STRONG",
-      "srcBytes": 4810,
-      "outBytes": 7929,
-      "ratio": 1.648
+      "src": 11.5,
+      "out": 7.5
     },
     {
       "file": "js/v8/entities/LootCardBuilder.js",
-      "profile": "STRONG",
-      "srcBytes": 23231,
-      "outBytes": 32950,
-      "ratio": 1.418
+      "src": 52.9,
+      "out": 31.5
     },
     {
       "file": "js/v8/entities/PathFinder.js",
-      "profile": "LIGHT",
-      "srcBytes": 1267,
-      "outBytes": 1556,
-      "ratio": 1.228
+      "src": 3.9,
+      "out": 2.8
     },
     {
       "file": "js/v8/entities/VendingMachine.js",
-      "profile": "STRONG",
-      "srcBytes": 26080,
-      "outBytes": 35529,
-      "ratio": 1.362
+      "src": 63.1,
+      "out": 33.7
+    },
+    {
+      "file": "js/v8/interaction/MachineInteraction.js",
+      "src": 8.7,
+      "out": 5.1
     },
     {
       "file": "js/v8/map/MapGen.js",
-      "profile": "STRONG",
-      "srcBytes": 23825,
-      "outBytes": 32050,
-      "ratio": 1.345
+      "src": 59.2,
+      "out": 34.6
     },
     {
       "file": "js/v8/map/ProceduralTextures.js",
-      "profile": "STRONG",
-      "srcBytes": 13699,
-      "outBytes": 19103,
-      "ratio": 1.394
+      "src": 22.3,
+      "out": 18
     },
     {
       "file": "js/v8/ui/MercyScroll.js",
-      "profile": "STRONG",
-      "srcBytes": 15279,
-      "outBytes": 22773,
-      "ratio": 1.49
+      "src": 18.5,
+      "out": 31.5
     },
     {
       "file": "js/v8/ui/PanelsUI.js",
-      "profile": "STRONG",
-      "srcBytes": 102820,
-      "outBytes": 136299,
-      "ratio": 1.326
+      "src": 244.4,
+      "out": 132.3
+    },
+    {
+      "file": "js/v8/ui/PlayerGuide.js",
+      "src": 275.2,
+      "out": 291.8
     },
     {
       "file": "js/v8/ui/QuickLaunchGuide.js",
-      "profile": "STRONG",
-      "srcBytes": 12790,
-      "outBytes": 26388,
-      "ratio": 2.063
-    },
-    {
-      "file": "js/v8/ui/WelcomeGuide.js",
-      "profile": "STRONG",
-      "srcBytes": 177809,
-      "outBytes": 243357,
-      "ratio": 1.369
+      "src": 14.5,
+      "out": 18.3
     }
-  ]
+  ],
+  "fallbackCopied": [],
+  "verbatim": [
+    "NewOrigami.8.html",
+    "NewOrigami.Engine8.html",
+    "NewOrigami.Panels.html",
+    "gitVersion.js",
+    "favicon.ico",
+    "sw.js",
+    "js/lucide.min.js",
+    "assets/  (recursive)",
+    "data/  (recursive)",
+    "css/  (recursive)",
+    "js/data/  (recursive)"
+  ],
+  "phase2Pending": [
+    "Inline engine script in NewOrigami.Engine8.html (~1.3MB) — copied verbatim, STILL READABLE.",
+    "Inline script in NewOrigami.Panels.html — copied verbatim, STILL READABLE.",
+    "js/data/i18n.js — copied verbatim (localization-sensitive; harden later with reservedStrings).",
+    "Three.js is loaded from CDN (importmap) — vendor locally for offline play + resilience."
+  ],
+  "totals": {
+    "hardenedFiles": 24,
+    "hardenedSrcKB": 1002.9,
+    "hardenedOutKB": 750.1,
+    "failures": 0
+  },
+  "leakGuard": "PASS — no internal docs in dist"
 }

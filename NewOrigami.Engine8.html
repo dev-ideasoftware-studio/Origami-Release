@@ -17,6 +17,245 @@
   handle it" punts without an entry here.
 
   ── ACTIVE DISABLES (review on sight) ──
+  • INLINE MACHINE-CLICK DELEGATE (_tryMachineClick) — REMOVED 2026-06-15 (Mark: "total refactor so it
+    doesn't keep stop working when anything is changed with the dungeon. It needs to be segmented out on
+    its own"). WHAT/WHERE: the slot+vending click delegate that lived in _tryMachineClick (was inside the
+    pointer-handler block, just above _handleCanvasClick) and its one call at the top of _handleCanvasClick
+    are DELETED. WHY: the delegate shared _handleCanvasClick's lifetime, so any dungeon/overlay edit that
+    perturbed the shared handler intermittently stole the vending/slot click ("sometimes it works"). MOVED
+    TO: js/v8/interaction/MachineInteraction.js — a self-contained singleton that installs its OWN
+    capture-phase pointerdown+pointerup on renderer.domElement (see MachineInteraction.attach(...) right
+    after the __rendererPdownCount counter) and stopImmediatePropagation()'s a consumed gesture so neither
+    the hold-to-autofire timer nor _handleCanvasClick sees it. Machines register on creation: slot in the
+    GLTF callback (search "id: 'slot'"), vending after window._vendingMachineGroup is set (search
+    "id: 'vending'"); registry is reborn on every floor reload (descend = full reload). BEHAVIOR CHANGE:
+    slot+vending are now FPV-only (skipped in top-down, modeAlpha>=0.015) to match the slot's layer-1 FPV
+    intent — previously the slot Box3 was clickable in top-down too (flip fpvOnly:false on the vending
+    register to restore top-down vending). RESTORE the old inline path: re-add _tryMachineClick from git +
+    its call atop _handleCanvasClick, drop MachineInteraction.attach()/register(). Live re-register after a
+    hot edit: window.MachineInteraction.register({...}). — Mark GO, 2026-06-15.
+  • SLOT — HIDDEN 3-EMOJI PLACEHOLDER GAME — DEMOTED 2026-06-15 (Mark: "click = spins = we SEE what it
+    does"). WHERE: window._slotSpin (in the slot GLTF callback). The slot click now defaults to POPPING the
+    VISIBLE Panels 4-reel elemental game (posts SLOT_MACHINE_PLAY → enterSlotsGame → renderSlotsUI/spinSlots)
+    instead of the hidden 3-emoji/gold placeholder. The in-world bulb flash still plays. The 3-emoji
+    placeholder is now the FALLBACK (set window._slotPanelGame=false). The 3D reel-cylinder spin stays
+    DISABLED (window._slotReelSpin — rotating the GLB tore the model). RESTORE the placeholder as default:
+    window._slotPanelGame=false. — Mark GO, 2026-06-15.
+  • PANELS HARDCODED MODAL ALLOWLIST (_MODAL_IDS_BLOCK_CANVAS) + _wgOpen() SPECIAL-CASE — RETIRED 2026-06-15
+    (Mark: stop the intermittency). WHERE: NewOrigami.Panels.html installCanvasClickForwarder. The
+    hand-maintained 6-id allowlist + the welcome-guide `.is-open` special-case that gated the canvas-click
+    forwarder are REPLACED by a declarative `.blocks-world-input` class watched by a MutationObserver
+    (single cached flag __worldInputBlocked) + a body-pointer-events watchdog. WHY: the allowlist silently
+    desynced whenever a dungeon overlay/modal was added (inventory/settings were already outside it), which
+    is a source of the "stopped working when the dungeon changed". Modals now opt in by carrying the class;
+    new modals participate with one class, never an allowlist edit. RESTORE: re-add _MODAL_IDS_BLOCK_CANVAS
+    + _wgOpen and point forward()/the auditor back at them. — Mark GO, 2026-06-15.
+  • REACTIVE FRAME-TIME THROTTLES — DISABLED 2026-06-14 (Mark: "throttle removal... de-prioritize by
+    observer, never throttle"). WHAT/WHERE: (1) _pipPerfPin reactive PIP-tighten → no-op _updatePipPerfPin
+    (~10844; was rollingFt>33 / _oniBusy); (2) _perfMode now triggers on the STABLE hostileInRoom count ONLY
+    (~26221 entry / ~26226 exit; dropped _ftBad/_ftGood/_oniBusy frame-time triggers); (3) adaptive-res B015
+    DPR shed/add OFF by default (~26871; window._adaptiveRes===true to re-enable). WHY: these frame-time
+    feedback loops violate the harmonic invariant (render cost feeding back into scheduling) → the 32-49 fps
+    OSCILLATION; and the GPU sat at ~30% (CPU-bound) so DPR-shedding only blurred, never raised FPS. Oni-Baba
+    still COMPUTES renderStress (telemetry intact) — only the engine consumers that mutated render cost are
+    gone. KEEP the depth-1 room super-cull (observer-based de-prioritization = doctrine-approved). RESTORE:
+    window._adaptiveRes=true + re-add the rollingFt triggers from git history. — gatekeeper seat, Mark GO.
+  • LANTERN POINTLIGHTS — STATIC-CAPPED 2026-06-13 (Mark: "trim forward lights", chose light-trim over
+    DPR-cut to keep 4K sharp). WHERE: the per-room lantern loop (rooms.forEach ~1956) now creates a
+    PointLight for only the first window._maxLanternLights lanterns (default 4); the rest are
+    EMISSIVE-ONLY (the glowing lantern mesh stays via _lanternRamp ~2000, but casts no light). WHY: the
+    build is fill/fragment-bound — r128 forward rendering loops ALL lights per fragment at 4K (DPR²), so
+    fewer standing PointLights = proportionally less per-fragment cost. Capped STATICALLY (count fixed at
+    build) so it never triggers the shader-recompile hitch that dynamic light toggling would. Key cabaret
+    lights (bar/slot/succubus spot) are separate, NOT affected. RESTORE: window._maxLanternLights high
+    (e.g. 99) + regenerate the floor. Intensity-fade culling alone does NOT help (a 0-intensity light
+    still counts in the shader); the COUNT is what matters.
+  • PER-CAMERA PRIORITIZATION CULL — PHASE 1 2026-06-13 (Mark: "setup prioritization culling for TOP-DOWN
+    and FPV"). Two changes, both knob-gated: (1) pedestal PointLight cull now measures distance from the
+    ACTIVE observing camera (topDownCamera in top-down, FPV camera otherwise) instead of always the FPV
+    camera (~25180) — top-down lit the wrong monsters before. (2) FPV-in-PIP "eye-spotter": when the PIP
+    shows the FPV (top-down main), the inset FPV's far plane is clipped to window._pipFpvFar (default 20wu,
+    was 100) atomically around the PIP render (~11116), restored in finally so the main FPV is unaffected.
+    Doctrine: deprioritize by observer, never throttle. REVERT: window._pipFpvFar=100 (eye-spotter off);
+    pedestal change is the one-camera-vs-active line. Phases 2–3 (per-mode cull radius, frustum-submit) pending.
+  • UnrealBloom (bloomPass) — REMOVED FROM COMPOSER 2026-06-13 (Mark: "remove the unreal"). WHAT: bloomPass
+    kept constructed but no longer composer.addPass()'d; enabled=false at creation (grep `new THREE.UnrealBloomPass`,
+    ~5121). WHY: it amplified the HDR green-cyan outline edge into a scene-wide green wash (worst on load /
+    lights-out) + blew PBR/emissive highlights into a sparkly haze, plus a per-frame full-screen fill cost at 4K
+    (the build is fill-bound). Bokeh + Vignette already gone; bloom was the last post pass. Glow now from the
+    FREE CSS #fx-grade + additive sprites. The two turbo `.enabled` toggles (~26868/26885) are now inert no-ops.
+    RE-ADD: uncomment composer.addPass(bloomPass) + set enabled=true. LIVE A/B: window.bloomPass.enabled=true/false.
+  • MONSTER BLOOM-GLOW SPRITE — OFF 2026-06-13 (Mark: "turn off reflections for monsters"). WHAT: the
+    per-monster additive "ethereal ghostbuster silhouette bloom ray" sprite (bloomSprite, _bloomMatIdle,
+    additive @0.45, ~8019) is no longer added to the wrapper — gated by window._monsterBloom (default
+    false). This additive glow is what read as a glossy sheen/reflection on the mesh after UnrealBloom was
+    removed. Not-added (vs visible=false) so _setMonsterHostile / aura-breathing can't revive it. RESTORE:
+    window._monsterBloom=true. (Body material specular was ALREADY zeroed by buildMonsterEntity's recipe.)
+  • MONSTER PBR — MATTED 2026-06-13 (Mark: "fix that pbr glb"). Not a disable: _matteMonsterMaterials
+    (grep it, next to _killGltfMipmaps) forces imp/goblin/mummy GLB PBR bodies metalness=0, roughness=1,
+    metalnessMap/roughnessMap/envMap=null at load. Goblin/imp bodies were already specular-zeroed by
+    buildMonsterEntity; this mainly covers the mummy + non-body PBR. Succubus EXEMPT. REVERT: remove the 3 calls.
+  • GLOWING-WHITE MONSTER EYES — REMOVED 2026-06-13 (Mark: "those ended up looking like little possessed
+    eyeballs"). WHERE: buildMonsterEntity material loop (~7752) forced eye meshes (name eye/iris/pupil/…)
+    to opaque white + emissive white @ intensity 8.0, always on. Eyes are no longer special-cased — they
+    use the same clean paper-origami body recipe as the head. (Dead eyeMaterials glow blocks at ~12404 /
+    ~24661 / ~24706 are harmless no-ops — eyeMaterials is never populated.) RESTORE: re-add the isEye branch.
+  • COMBAT-START SHADER HITCH — FIXED 2026-06-13 (Mark: "almost a hard stop when combat started").
+    Not a disable: the load-time shader prewarm (~11828) now ALSO warms the HOSTILE pedestal + bloom
+    materials (_PED_*_MAT_HOSTILE + _bloomMatHostile). With neutral-start no monster is hostile at load,
+    so _setMonsterHostile's material swap (~12389) compiled those 6 shaders LIVE at first combat = a
+    synchronous hitch. Warming them at load makes the swap free. (Pairs with the SPAWN-HOSTILE entry.)
+  • SPAWN-HOSTILE — DISABLED 2026-06-13 (Mark: "all monsters should be neutral"; the rising-sun Hinomaru
+    pedestal showed at map generation, and spawn-hostile monsters made anyHostile true → the combat
+    inaction-pause fired before any real fight). WHERE: buildMonsterEntity ~7914 (`_spawnHostile` gates
+    BOTH the initial pedestal materials AND ud.isHostile at ~8095). MapGen still ships sp.isHostile=true
+    on 6 spawns (floor-1 supervisor, procedural goblins/supervisors/imps, Oni-Baba boss) but the engine
+    now ignores it for INITIAL state — monsters spawn neutral + aggro only when provoked
+    (_setMonsterHostile on player attack / proximity). RESTORE legacy spawn-hostile: window._neutralStart=false.
+  • PAUSE-ON-INACTION (accessibility auto-pause) — ADDED 2026-06-12 (Mark: pause the game during combat
+    after 2s of no input so younger/older players keep up). WHERE: wall-clock idle timer
+    window._combatIdleStart + freeze trigger right after `anyHostile` (~26090), reset/resume via
+    _resetCombatIdle (DOM input + real player translation; auto-face excluded), self-contained
+    cue _showInactionPauseCue reading "⏸ COMBAT PAUSED" (~1680). Combat-only; resumes on ANY input incl.
+    mouse-look; reuses the proven _gamePaused render-only gate; ALSO stops all music while frozen
+    (_setGamePausedAudio: pauses _succubusSong + _hallwayMusicEl + suspends _audioCtx, restored on resume).
+    OFF-SWITCH: window._pauseOnInaction=false. (Cue lives in the engine iframe DOM to avoid touching the
+    Panels overlay, which has unrelated in-flight edits.)
+  • MONSTER FACING-ROTATION — GATED ON MOVEMENT 2026-06-12 (Mark: monsters "get stuck and shake until I
+    move"). WHERE: both goblin chase blocks — path-follow (~13862) and hostile (~14016 facing / ~14405
+    move). Facing now writes only when the monster actually moved (or is in melee range, dist<=2.5); a
+    fully wall-blocked monster holds its last facing instead of spinning in place. PLUS a stuck-escape:
+    wedged >0.5s → clear ud.aiPath + retry a fresh path so it frees itself without the player moving
+    (ud._stuckSince). REVERT: remove the _chaseMoved/_stuckSince gates → unconditional rotation returns.
+  • ARROW/MISSILE THIN-WALL COLLISION — FIXED 2026-06-12 (Mark: "arrows go through walls"). Not a disable:
+    tickMissiles wall-hit (~18430) now also tests _segmentCrossesThinWall (edge panes in _thinWallEdgeSet),
+    not just cell.type — arrows/bullets/shurikens used to fly through floor-1 room dividers (walls live on
+    cell EDGES there, not as 'wall' cells). Shoji punch-through unaffected (edge-set excludes doors).
+  • SUCCUBUS OPENING WAVE (pre-song greet) — REMOVED 2026-06-12 (Mark: "you have her waving animation
+    before the song begins, dont do it, its too long and is the cause of the singing delay"). WHERE: the
+    perform loop's line-0 branch (~6623) played 'greet' (a long wave) on the first vocal line, delaying the
+    sing clip's launch; it now plays 'sing' immediately. RESTORE: window._sucOpenWave=true.
+  • SUCCUBUS MIC — MOUTH-ANCHORED while singing 2026-06-14 (Mark: "clip 17 still has her microphone flying").
+    WHERE: the mic ARM-DIRECTOR (~6087). Singing clips (default sing/sing2) now PIN the mic ball to her MOUTH
+    (from the Head bone) and SKIP the head + body anti-insertion guards — the old hand-offset + radial guards
+    were the per-clip tug-of-war that flung the mic. Non-singing held clips (walk/walk2/strut/run + the
+    pole-dance) keep the hand offset + both guards. SUPERSEDES the prior "head-guard skips clip 'sing' only"
+    gate; window._micGuardSing is now INERT. TUNE: window._mouthAnchorClips (clip set) · _mouthFwd · _mouthUp.
+  • MONSTER CHASE SPEED — RETUNED 2026-06-12 (Mark: monsters "move too slow… can't catch the player";
+    power-coder seat, per knowledge/AI_REBUILD_04 Phase-0 spec). Goblin hostile chase was
+    MON_WANDER_SPD×1.6 (2.24 wu/s) at the two chase step sites (~13786 path-follow / ~14236 direct) —
+    slower than the player walk (MOVE_SPD 2.65) and their own flee (×2.0=2.8), so pursuit NEVER closed.
+    Now MON_WANDER_SPD×MON_CHASE_MULT (= MOVE_SPD×1.08 ≈ 2.86 wu/s), consts beside IMP_SPD (~12719).
+    Wander (1.4) + imp (IMP_SPD) untouched. Live knob: window._chaseMult. REVERT: window._chaseMult=1.6.
+  • LEGACY AI WRITERS FOR AI-OWNED MONSTERS — CONDITIONALLY GATED 2026-06-12 (Mark GO: MonsterAI v2
+    Phase-1 wiring; power-coder seat). WHERE: `if(ud._aiOwned) continue` at the top of tickMonsterAI's
+    per-monster loop (~13085) and inside the _crowdWatch RAF body after the one-time seating (~5996).
+    WHAT: while window._AI_V2 is ON, the 3 cabaret audience monsters (cab-imp-fan / cab-gob-1 / cab-gob-2)
+    are adopted by the single-owner MonsterAI v2 constructor (js/v8/ai/, ticked in the main loop after
+    tickMonsterAI ~25890); their legacy state/facing/anim/pinning writers are skipped — incl. the
+    distance-slumber visibility toggle (~13107; portal culling still hides their meshes) and brain
+    observation (no MONSTER_INTEL loss: that only posts while hostile, and hostile/dead monsters are
+    RELEASED back to legacy AI instantly). WHY: kill the multi-writer facing war (shake / walk-in-place /
+    wedged-bow) by giving each monster ONE transform owner. DEFAULT: window._AI_V2=false — everything
+    runs exactly as before. RESTORE live: window._AI_V2=false (no reload; agents auto-release).
+  • MONSTER FLEE / FETCH / RETREAT — DISABLED 2026-06-12 (Mark: "remove fleeing for right now. every
+    monster attacks when hostile"; Worker 1). Global kill-switch `window._NO_FLEE=true` (defined just
+    above `_setMonsterHostile`, ~line 12070) gates EVERY flee/fetch/retreat entry so hostile monsters
+    fight to the death: imp panic-flee in _setMonsterHostile (~12079) + the attack-alert cascade (~12340);
+    goblin "must get help first" via _forceGoblinFleeForHelp (~12609) + its hostile-tick gate (~13725);
+    low-HP fetch-reinforcements (~13742); low-HP flee in _applyMonsterDamage (~23018); Oni-Baba 'retreat'
+    order (~11991); boulder-panic dodge (~15957). PLUS a rescue at the flee + fetch state-handler tops
+    (~14459 / ~14780) snaps any monster already in flee/fetch (e.g. a save from before the switch) back
+    to hostile. EXEMPT: the cabaret succubus performer flee (separate _succubusFlee system, ~6434) —
+    Mark kept it (she never fights back). Telemetry intact: hostile MONSTER_AI_STATE still posts; only the
+    flee-state posts stop. WHY: monsters fleeing on contact made combat unplayable. RESTORE live with
+    window._NO_FLEE=false (no reload) — every gate is a single flag check; nothing was deleted.
+  • CABARET SHOW-DIM (_showDim RAF) — REMOVED 2026-06-12 (Mark: "just dont shut out the lights and remove
+    that fucked up code"). WHERE: the block after the stage face-lights note (~line 5660) dimmed
+    ambient/hemi/dir to 25% within 16u of the Starlet — the "lights down → green tint up" trigger. Room
+    lighting now stays constant during her show. RESTORE: re-add the _showDim RAF from git history (18ae4e1).
+  • QUICK LAUNCH GUIDE auto-show — DISABLED 2026-06-12 (Mark, asked repeatedly: "turn off the quick
+    guide"). WHERE: js/v8/ui/PlayerGuide.js (~line 581) — quickLaunch.show() now gated behind
+    window._quickGuide===true; it never auto-opens on play start. RESTORE: window._quickGuide=true.
+  • Floor-1 "test monster" goblin trio (test-idle/test-ally/test-hostile) + 2nd cabaret imp fan — REMOVED
+    2026-06-12 (this seat; Mark: "should only be 2 goblins and 1 imps in the audience… some are laid atop
+    the others"). WHERE: the mobSpawns.push block after generateCastleMap (~line 1046) now spawns exactly
+    cab-imp-fan (61,94 stage-left) + cab-gob-1 (62,97) + cab-gob-2 (63,98) with cabAudience roles consumed
+    by the _crowdWatch choreography (~line 5960). WHY: the trio was a debug fixture stacking on the imps at
+    spawn-relative coords. RESTORE: re-add the three test-* pushes + the second _impSpec from git history.
+  • Floor-1 PROCEDURAL generation (foyer-of-heralds layout + warn-runner heralds) — DISABLED for
+    level 1, 2026-06-12 (this seat; Mark: main hall around the cabaret, all rooms off it, casino boss
+    room; then "we try the other type of thin wall from the beginning"). WHERE: generateDungeonMap
+    (js/v8/map/MapGen.js, first line after the level clamp) early-returns generateFloor1HandAuthoredMap
+    for level===1. That function now holds the TRUE EDGE-WALL layout recovered from the .trust bank:
+    rooms tile DIRECTLY adjacent (NO wall tiles between them), partitioned by roomId — cabaret 60,92 8×8 ·
+    main-hall ring wrapping it · bunkroom W · laundry N · LEVEL CASINO E with boss-supervisor-L1 at 73,95
+    guarding stairs_down 74,95 · south entry + stairs_up 63,105. Doors are EDGE gaps (tile.doors=['N'..]),
+    NOT shoji_door tiles. The engine draws ONE thin pane per roomId boundary + perimeter (the edge-wall
+    block after the stone-wall build, ~line 1935) and hides the solid cubes (window._setThinWalls toggle);
+    room-divider panes push AABBs to window._thinWallColliders, checked in the 3 movement gates. The 7
+    herald spawns are GONE with the old body; the earlier tile-pane experiment (panes on wall-tile faces)
+    was REPLACED by this edge system (Mark: "i dont like how this is going"). Floors 2+ stay procedural
+    with solid cube walls hidden→panes on their floor↔void perimeters. RESTORE the old foyer: delete the
+    level===1 early-return (old body in git history at 18ae4e1). Revert to solid walls live:
+    window._setThinWalls(false).
+  • Wall emissive OLIVE HUE (0x22201d) — NEUTRALIZED to 0x1d1d1d, 2026-06-12 (this seat; Mark:
+    "remove the green tint that loads on start… keep the current textures"). WHERE: mats.wallTop /
+    mats.wallSide / mats.pipWall (~line 1870-1882). Intensity 0.405 KEPT (same brightness, hue gone);
+    textures untouched. Also: stairs exitLight 0xb8d4a0 (mossy green at the spawn stairs) → 0xffe2b4
+    (~line 2979); scene.background 0x3a3f47 → 0x3c3d42 (~line 1159). RESTORE: put the old hex values back.
+  • Cabaret DECORATIVE imp-fans (_spawnImpFans NPCs) — DISABLED 2026-06-11 (this seat; Mark: "no
+    more stage actors that are hard to interact with"). WHERE: the _spawnImpFans IIFE (~line 6128)
+    early-returns unless window._cabImpFans===true. WHY: un-attackable NPC actors break the game's
+    direct-interaction / WCAG rule. REPLACED by 2 REAL monster imps via mobSpawns (~line 1066,
+    nameKey 'yakuza_imp', built by buildMonsterEntity — full AI + combat). RESTORE: window._cabImpFans=true.
+  • Succubus "TARGETABLE" (attack/kill = dark path) — REVERTED 2026-06-10 (this seat, per
+    Mark's approved emergency plan). WHAT/WHERE: the registration block right after
+    `window._succubusObj = root;` (~line 6106, inside _performerLoop) pushed her root into the
+    global `monsterWrappers` array with synthetic userData (isPerformer / hp / aiRoomId:-1).
+    WHY: she is a bespoke performer with NO `monBase`, so the cabaret goblin wave/bow PEER scan
+    in `tickMonsterAI` (~lines 12998 & 13044) deref'd `peer.userData.monBase.position` on her
+    EVERY frame → TypeError (caught by Clock.js) that aborted the loop body BEFORE the render →
+    frozen-frame TOTAL LOCK on room entry; the collider-push loop (~4151) also shoved her off
+    her stage mark. RESTORE/REDESIGN: do NOT re-add her to monsterWrappers. Make her targetable
+    via a dedicated click-raycast hit-test against her mesh + the isolated
+    `_succubusOnHit`/`_succubusDie` dark-path handlers (still present + inert in this file) —
+    those helpers and the `isPerformer` guards in `_applyMonsterDamage` / `_setMonsterHostile` /
+    crowd-watch / `_step` are KEPT as the redesign seed. Spec:
+    knowledge/SPEC_CABARET_STAGE_AND_SAFE_TARGETABLE_2026-06-10.md.
+  • Old WAGER gambling paths — SUPERSEDED 2026-06-10 (Worker 4 / Researcher 2) by the
+    UNIFIED GAMING SYSTEM. WHAT/WHERE: (1) the auto "50 gold on RED" quick-roulette —
+    `START_ROULETTE_SPIN` handler in NewOrigami.Panels.html is now a dead no-op (WAGER
+    no longer posts it); (2) the WAGER button now calls `handleWager` (CARD/DICE even-odd
+    deck with player-picked stake), NOT `handleQuickGame`; (3) the casino SUB-GAME sprawl
+    (BLACKJACK, HI-LO, BACCARAT, POKER DUEL, CHO-HAN, DICE DUEL, LIARS DICE, SLOT MACHINE,
+    CONTRACTS) is no longer reachable from WAGER — those start/enter fns + their decks
+    remain in NewOrigami.Panels.html but are ORPHANED (kept, not deleted). WHY: Mark asked
+    to consolidate the roulette + gaming cards into ONE clean even/odd flow (CARD GAME +
+    DICE GAME only to start) and archive the old roulette. The new flow uses GAMING_WHEEL_ON/
+    GAMING_WHEEL_OFF (this file) to show the wheel, decoupled from the blackjack approach
+    machinery; resolution still rides WAGER_RESOLVE. RESTORE: re-point `emitAction('WAGER')`
+    back to `handleQuickGame` and re-add the casino menu cards to the gaming deck. Spec:
+    knowledge/GAMING_CONSOLIDATION_SPEC_2026-06-10.md. _activeBlackjackGoblin/_triggerBlackjackSession
+    still exist for any future re-enable; QUICK_GAMBLE_START/END left intact (blackjack-shared).
+  • setInterval(loop,4) redundant render driver — REMOVED 2026-06-08 (Worker 1)
+    in startLoop() (~22801). WHAT: removed the ~250 Hz `setInterval(loop, 4)`
+    that ran ON TOP OF the requestAnimationFrame drive. WHY: dual-driven, it
+    pushed ~147 render submissions/sec ≈ 2.5× a 60 Hz panel → GPU command-queue
+    flood → raster stall → the 63↔34 fps oscillation. RAF alone self-caps to
+    display refresh; this removes WASTED renders, NOT a throttle (every vsync
+    frame still renders). B016. RESTORE: only if RAF-pause in a backgrounded tab
+    proves undesirable — then use a visibility-gated timer, not a 4 ms interval.
+  • Off-room monster mixer/matrix + pedestal lights — FOG-GATED/CAPPED 2026-06-08
+    (Worker 1). Mesh-visibility off-room cull is LIVE (`_updateOniBabaPortalCulling`);
+    previously the loop still ran `mixers.forEach(m=>m.update())` for ALL monsters,
+    so fogged monsters paid skeleton-mixer CPU + updateMatrixWorld every frame. NOW:
+    the culler flags fogged wrappers (`mixer._cullHidden` + `matrixWorldAutoUpdate=false`);
+    the mixer loop skips them; staggered un-fog (`_unfogBudget`) amortizes room-transition
+    reveals; pedestal PointLights capped (`_maxPedLights`, default 4) to stop shader-recompile
+    storms; PIP super-culls to depth-1 both modes (`_pipDepth1`). All restore on show (safety
+    overrides close/hostile/chase/same-room → no invisible-monster bug). Toggles:
+    `window._fogMixerCull/_unfogBudget/_maxPedLights/_pipDepth1/_portalDepth/_monsterDensity`.
   • Welcome Guide Auto-Aim checkbox — REMOVED 2026-06-03 (Worker C)
     in js/v8/ui/WelcomeGuide.js cover controls + bind handler. WHAT: removed
     the visible "Enable Auto-Aim Assistance" checkbox from page 1 per Mark.
@@ -57,12 +296,14 @@
     FPV, a false positive). Mark, seeing it cloud AGAIN: "the silhouette you all have is NOT WORKING
     so STOP USING THAT METHOD." THIS SUPERSEDES the earlier "always-on / 33rd request for the
     ethereal outline" mandate — do NOT re-enable the shells without Mark's EXPLICIT new ask.
-    BOTH silhouette methods have now failed: the shells cloud on these models; the OutlinePass
-    (below) never rendered. A future rim, if Mark wants one, must avoid both.
-    The OutlinePass approach (stub→real-pass→skinning-flags, v8245-v8247) NEVER rendered:
-    r128 can't run two OutlinePass in one composer + OutlinePass draws skinned meshes in
-    BIND POSE. Diagnostic 39e835a proved the pass was live-but-invisible.
-    The old targeting outlinePass disable for monsters at ~22680 is now MOOT (superseded).
+    The SHELL/hull method stays OFF (it clouds). The OUTLINEPASS rim was RE-TRIED 2026-06-12
+    (fed all monsters via a _monsterRimFeed loop at strength/glow/thickness 2.0) and REVERTED
+    the same day: in the live multi-pass composer it produced NO visible rim, its green-cyan
+    edge colour (RGB 0,2.4,1.8) at glow 2.0 + bloom washed the whole scene GREEN (worst on load
+    / when lights dim), and it cost ~half the frame budget (120→60). The feed loop is deleted,
+    params restored to 1.2/0.48/0.125, and the targeting-disable (selectedObjects=[] +
+    enabled=false on target change) is back. NET: monsters render PLAIN. A future rim must avoid
+    BOTH methods (shell clouds; OutlinePass green-washes + won't skin in the live composer).
   • Legacy flat floor wards — REMOVED 2026-05-30 (ASSIGN-001, Worker B, integrated fc18a72).
     _placeEntranceBanners() + the now-dead _buildBloomDecal() are GONE — the two flat y=0.05
     "BEWARE WARDS" + "WELCOME" decals z-fought the floor at spawn (Mark's screenshot). Do NOT
@@ -87,7 +328,12 @@
     that interval.
   • Cinematic events (~1141) + PIP anim-capture (~8174) — disabled per MARK's own
     mandate. Left off unless Mark says otherwise.
-  • BokehPass DOF (~4183) — off by default (perf). Intentional.
+  • BokehPass DOF (~4674) — OFF (shipped default). Briefly enabled 2026-06-09 for a stress-test, then
+    DISABLED again (Mark) to hold 120fps@4K — the depth+blur pass cost the 120→60 vsync cliff in FPV for
+    a ~invisible blur. Re-enable: `window.bokehPass.enabled=true`. FPV-only (top-down bypasses composer).
+  • Vignette pass (~4776) — net-new 2026-06-09, now DISABLED (Mark) — superseded by the FREE CSS vignette
+    (`#fx-grade` in NewOrigami.8.html) which also works in top-down + avoids double-darkening FPV.
+    Re-enable: `window.vignettePass.enabled=true`. (CSS grade is the live atmosphere layer; zero GPU cost.)
   • Camera trauma shake (the constant combat screen-shake) — DISABLED 2026-06-03 (builder,
     Mark). WHAT: the per-frame camera-shake OFFSET is forced to 0 at the single apply site
     in the render loop (the "Camera trauma shake" block, ~23128, inside v8Clock.tick) — was
@@ -129,6 +375,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
+  <script>
+  /* SECURITY — same-origin postMessage gate (Mark 2026-06-14). Drops any foreign-origin message
+     before it reaches ANY handler in this engine frame (the ~170-type wire protocol injection
+     surface). All game frames are same-origin (relative iframe src). Empty origin (file://) allowed.
+     Registers FIRST so stopImmediatePropagation pre-empts every later listener. Disable: window.__msgGateOff=true. */
+  (function(){var T=[/* production allowlist: www + apex of origamiunderworld.com */'https://www.origamiunderworld.com','https://origamiunderworld.com'];try{window.addEventListener('message',function(e){var o=e.origin;if(o!==''&&o!==location.origin&&T.indexOf(o)<0&&!window.__msgGateOff){e.stopImmediatePropagation();}},true);}catch(_){}})();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <!-- NO-CACHE mandate 2026-05-26 — every load fresh from network. -->
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0"/>
@@ -144,35 +397,35 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-  <!-- Three.js r128 — proven CDN, matches FPV.2 exactly -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Three.js r128 — VENDORED LOCALLY (was cdnjs). No third-party CDN → no Tracking-Prevention storage block + works offline (freeware mission). -->
+  <script src="./vendor/three/r128/three.min.js"></script>
   <!-- Localization tables — exposes window.t, tCard, tMonster, tLog -->
   <!-- defer: runtime-only consumers (game module is itself deferred) -->
   <script defer src="js/data/i18n.js"></script>
   <!-- NewOrigami.Cards.js removed in 541fb95 — card data now lives in data/cards.json + data/loot.json, loaded on boot. -->
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="./vendor/three/r128/js/loaders/GLTFLoader.js"></script>
   <!-- MeshoptDecoder — required for EXT_meshopt_compression GLBs (Player.A.Walking.glb is meshopt-compressed; ~68% smaller than raw). NOT Draco — Draco is forbidden on this branch (see recovery-bf8a256-nodraco). -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/meshopt_decoder.js"></script>
+  <script src="./vendor/three/r128/js/libs/meshopt_decoder.js"></script>
   <!-- Post-Processing Pipeline (ported from FPV.2) -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/OutlinePass.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+  <script src="./vendor/three/r128/js/postprocessing/EffectComposer.js"></script>
+  <script src="./vendor/three/r128/js/postprocessing/RenderPass.js"></script>
+  <script src="./vendor/three/r128/js/postprocessing/ShaderPass.js"></script>
+  <script src="./vendor/three/r128/js/postprocessing/OutlinePass.js"></script>
+  <script src="./vendor/three/r128/js/shaders/CopyShader.js"></script>
+  <script src="./vendor/three/r128/js/shaders/LuminosityHighPassShader.js"></script>
+  <script src="./vendor/three/r128/js/postprocessing/UnrealBloomPass.js"></script>
   <!-- B015: FXAA anti-aliasing — the composer path ignores renderer antialias -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+  <script src="./vendor/three/r128/js/shaders/FXAAShader.js"></script>
   <!-- Tilt-shift / DOF shader (proper WebGL pass, no CSS blur of UI) -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/BokehShader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/BokehPass.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/BufferGeometryUtils.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
+  <script src="./vendor/three/r128/js/shaders/BokehShader.js"></script>
+  <script src="./vendor/three/r128/js/postprocessing/BokehPass.js"></script>
+  <script src="./vendor/three/r128/js/utils/BufferGeometryUtils.js"></script>
+  <script src="./vendor/three/r128/js/utils/SkeletonUtils.js"></script>
   <!-- Importmap: lets the modular three (used by USDZLoader below) resolve
        internal `import from 'three'` references. -->
   <script type="importmap">
-  { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+  { "imports": { "three": "./vendor/three/0.160/three.module.js" } }
   </script>
   <!-- Procedural .45 pistol model. Replaces the broken USDZ load that was
        throwing 'texCoord2f primvars:st0' parse errors and pulling in a second

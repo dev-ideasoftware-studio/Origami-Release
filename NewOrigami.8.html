@@ -7,6 +7,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
+  <script>
+  /* SECURITY — same-origin postMessage gate (Mark 2026-06-14). Every game frame (shell/engine/
+     panels) loads the others from RELATIVE src = same origin, so every LEGIT cross-frame message
+     shares location.origin. This capture-phase guard registers FIRST and drops any message from a
+     foreign origin before it reaches ANY handler in this frame — closing the injection surface for
+     the ~170-type wire protocol (grant-gold / save-corrupt / action-spoof) from a malicious
+     embedder or extension. Empty origin (file://) allowed for local play. Disable: window.__msgGateOff=true. */
+  (function(){var T=[/* production allowlist: www + apex of origamiunderworld.com */'https://www.origamiunderworld.com','https://origamiunderworld.com'];try{window.addEventListener('message',function(e){var o=e.origin;if(o!==''&&o!==location.origin&&T.indexOf(o)<0&&!window.__msgGateOff){e.stopImmediatePropagation();}},true);}catch(_){}})();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <!-- NO-CACHE mandate 2026-05-26 — every load fresh from network. -->
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0"/>
@@ -19,6 +28,15 @@
   <title>Origami Dungeon — Idea Software Studio</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <!-- PWA web app manifest — makes the game installable (add-to-home-screen / standalone). -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="application-name" content="Origami Underworld">
+  <meta name="theme-color" content="#0b1418">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Origami">
+  <link rel="apple-touch-icon" href="assets/brand/icons/apple-touch-icon-180.png">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:sans-serif}
@@ -39,16 +57,66 @@
     /* Descent fade — covers the engine iframe during floor reload */
     #descent-fade{position:fixed;inset:0;z-index:9999;background:#000;opacity:0;pointer-events:none;transition:opacity .55s ease;display:flex;align-items:center;justify-content:center;color:rgba(200,169,110,.8);font:600 14px monospace;letter-spacing:3px}
     #descent-fade.active{opacity:1;pointer-events:auto}
+    /* ── Atmospheric "spooky grade" overlay (2026-06-09, Mark: "max css, so much shadow, spooky") ──
+       FREE compositor-layer cinematic grade over the 3D view: cold-dark vignette + film grain +
+       slow "breath". ZERO 3D/GPU-pipeline cost, works in EVERY view (incl. top-down, which bypasses
+       the composer). pointer-events:none → clicks pass straight through to the engine (never break
+       click-forwarding). z:10 = above the engine canvas (z:0), BELOW the UI panels (z:30) so cards/
+       buttons stay crisp & un-graded. Live-tune from the console (no reload):
+         const g=document.getElementById('fx-grade');
+         g.style.setProperty('--vig','0.72');    // edge darkness   0..1
+         g.style.setProperty('--grade','0.45');   // cold-shadow tint 0..1
+         g.style.setProperty('--grain','0.09');   // film grain       0..1
+         g.classList.toggle('off');                // kill the grade entirely */
+    #fx-grade{display:none; /* DISABLED 2026-06-12 (Mark: "that green issue is back… happens when the lights go down") — this green-teal grade (rgba(8,26,30)/rgba(4,12,17)) becomes the dominant tint whenever the 3D scene dims (succubus show, dark rooms). Restore: delete this display:none. */
+      position:fixed;inset:0;z-index:10;pointer-events:none;will-change:opacity;
+      --vig:0.78;--grade:0.5;--grain:0.078;
+      background:
+        radial-gradient(ellipse 84% 88% at 50% 45%, rgba(8,26,30,0) 30%, rgba(4,12,17,var(--grade)) 100%),
+        radial-gradient(ellipse 74% 80% at 50% 45%, rgba(0,0,0,0) 38%, rgba(0,0,0,var(--vig)) 100%),
+        linear-gradient(180deg, rgba(0,4,7,0.34) 0%, rgba(0,0,0,0) 32%, rgba(0,0,0,0) 78%, rgba(0,3,6,0.40) 100%);
+      animation:fxBreath 8s ease-in-out infinite;}
+    #fx-grade.off{display:none}
+    #fx-grade::after{content:'';position:absolute;inset:-60%;pointer-events:none;will-change:transform;
+      background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='150' height='150' filter='url(%23n)' opacity='0.55'/></svg>");
+      opacity:var(--grain);mix-blend-mode:overlay;animation:fxGrain .7s steps(3) infinite;}
+    @keyframes fxBreath{0%,100%{opacity:1}50%{opacity:.94}}
+    @keyframes fxGrain{0%{transform:translate(0,0)}33%{transform:translate(-3%,2%)}66%{transform:translate(2%,-3%)}100%{transform:translate(0,0)}}
+    /* Her SONG chat bubble — DEDICATED, song text ONLY (driven by SUC_SONG; NOT the Oni-Baba event log). Mark:
+       "new text chat bubbles to show her song text". Near the top, kanji over English, with a speech tail. */
+    #chat-overlay{position:fixed;left:50%;top:7%;transform:translateX(-50%) translateY(-8px);z-index:55;pointer-events:none;
+      max-width:min(560px,86vw);text-align:center;opacity:0;transition:opacity .35s ease, transform .35s ease;
+      font-family:'Noto Sans JP','Hiragino Kaku Gothic Pro',system-ui,sans-serif;
+      color:#eaf7ff;font-size:clamp(15px,2.3vw,26px);font-weight:600;line-height:1.4;
+      padding:14px 26px;border-radius:22px;
+      background:linear-gradient(180deg, rgba(20,30,40,0.74), rgba(10,16,22,0.74));
+      -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+      border:1px solid rgba(120,210,255,0.30);
+      box-shadow:0 10px 34px rgba(0,0,0,0.55), 0 0 28px rgba(90,205,255,0.20), inset 0 0 0 1px rgba(255,255,255,0.04);
+      text-shadow:0 2px 10px rgba(0,0,0,.9)}
+    #chat-overlay.on{opacity:1;transform:translateX(-50%) translateY(0)}
+    #chat-overlay::after{content:'';position:absolute;left:50%;bottom:-8px;width:16px;height:16px;
+      transform:translateX(-50%) rotate(45deg);background:rgba(10,16,22,0.74);
+      border-right:1px solid rgba(120,210,255,0.30);border-bottom:1px solid rgba(120,210,255,0.30)}
+    #chat-overlay .hk-speaker{display:block;font-size:.58em;font-weight:700;color:#7fd6ff;letter-spacing:2px;margin-bottom:4px;opacity:.9}
+    #chat-overlay .hk-body{display:block}
   </style>
 </head>
 <body>
 
   <div id="fpv-viewport">
-    <iframe id="engine-iframe" src="NewOrigami.Engine8.html?v=8.1.176" allow="fullscreen" title="Origami 3D Engine Viewport"></iframe>
+    <iframe id="engine-iframe" src="NewOrigami.Engine8.html?v=8.1.346" allow="fullscreen" title="Origami 3D Engine Viewport"></iframe>
   </div>
 
+  <!-- Atmospheric "spooky grade": FREE compositor overlay over the 3D view (cold vignette + grain +
+       breath). pointer-events:none → clicks pass through to the engine. z:10 = above engine, below UI. -->
+  <div id="fx-grade" aria-hidden="true"></div>
+
+  <!-- Chat / song overlay — mirrors the event-log chat (incl. her song) big over the scene (Mark). -->
+  <div id="chat-overlay" aria-live="polite"></div>
+
   <div id="ui-viewport">
-    <iframe id="panels-iframe" src="NewOrigami.Panels.html?mode=dock&v=8.1.130" title="Origami UI Panels"></iframe>
+    <iframe id="panels-iframe" src="NewOrigami.Panels.html?mode=dock&v=8.1.165" title="Origami UI Panels"></iframe>
   </div>
 
   <div id="v8-badge">ORIGAMI v8 ◆ 折り紙</div>
@@ -94,8 +162,8 @@
 
   <!-- <script src="NewOrigami.OniBaba.js"></script> -->
   <!-- defer: both files have only runtime consumers (postMessage handlers, gameplay calls) -->
-  <script defer src="js/data/i18n.js?v=v8328"></script>
-  <script defer src="js/v8/OniBaba8.js"></script>
+  <script defer src="js/data/i18n.js?v=v8329" integrity="sha384-d6SZ2JBpW7jhr5rzHMvMdi0VHlkVaEh9UblwQf3qonXzK44nDI+Ffa6ujsz3C8HZ"></script>
+  <script defer src="js/v8/OniBaba8.js?v=8.1.267" integrity="sha384-osv8vaCCRkiKO/xojykKJz9U7DBKHFMy2GQQg9QH32VLVViJPLc88xxwnEA55ywl"></script>
 
   <script>
     window.onerror = function(message, source, lineno, colno, error) {
@@ -147,6 +215,19 @@
       if(!ev || ev.type==='EVENT_CANCELLED') return;
 
       switch(ev.type){
+        // Player guide open/close → forward to the engine (cues/pauses her song)
+        case 'WELCOME_GUIDE_OPEN':
+        case 'WELCOME_GUIDE_CLOSE':
+          to(fpv, ev); break;
+        // Her SONG → its OWN chat bubble (song text only — never the Oni-Baba event/collision messages). Mark.
+        case 'SUC_SONG': {
+          const _sb = document.getElementById('chat-overlay');
+          if (_sb){
+            if (ev.show){ _sb.innerHTML = '<span class="hk-speaker">♪ 秘密のダンス</span><span class="hk-body">' + (ev.jp || '') + '<br><span style="opacity:.72;font-style:italic">' + (ev.en || '') + '</span></span>'; _sb.classList.add('on'); clearTimeout(_sb._t); _sb._t = setTimeout(() => _sb.classList.remove('on'), 4500); }
+            else { _sb.classList.remove('on'); }
+          }
+          break;
+        }
         // Engine → Panels
         case 'PLAYER_ROT_REALTIME': case 'PLAYER_MOVE': case 'PLAYER_MOVE_STATE':
         case 'RADAR_UPDATE': case 'SYNC_STATS': case 'ADD_CARD': case 'UPDATE_LOOT_CARDS':
@@ -165,6 +246,7 @@
         case 'SHOW_BLACKJACK':
         case 'HIDE_BLACKJACK':
         case 'BLACKJACK_PAYOUT':
+        case 'SLOT_MACHINE_PLAY':
         case 'PERF_MONITOR_UPDATE':
         case 'PIP_DISABLED_STATE':
         case 'ENGINE_LOAD_PROGRESS':
@@ -172,6 +254,7 @@
         // Engine → Oni-Baba pipeline (per-monster brain).
         case 'MONSTER_INTEL': case 'MONSTER_SPIRIT_REPORT':
         case 'MONSTER_SOCIAL_DECLARED':
+        case 'PANEL_TOUCH':
         case 'PLAYER_IO_ANOMALY':
           // Oni-Baba already listens on window directly — no forwarding
           // needed. (Posted via window.parent.postMessage which reaches

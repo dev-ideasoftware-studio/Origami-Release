@@ -1,2 +1,1 @@
-// AUTO-GENERATED — Origami Dungeon distribution build (gold f964c87). ASCII-safe.
-window.GIT_VERSION = { sha: 'f964c87', subject: 'Origami Dungeon distribution build (gold)', date: '2026-06-07', build: 'gold-f964c87' };
+window.GIT_VERSION = { sha: 'd84e62b', subject: 'Origami Dungeon — hardened SC distribution', branch: 'main', build: 'sc-gold-2026-06-15' };

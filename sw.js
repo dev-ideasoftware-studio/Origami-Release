@@ -16,7 +16,7 @@
  * To restore offline-play later, revert this file to the pre-mandate
  * cache-first version in git history.
  */
-const CACHE = 'origami-v8-2026-06-07-i18n-l3-v8328-sc1-sc2-sc3';
+const CACHE = 'origami-v8-2026-06-15-slot-plays-own-glb-animation-v8486';
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();
