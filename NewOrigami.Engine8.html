@@ -17,6 +17,90 @@
   handle it" punts without an entry here.
 
   ── ACTIVE DISABLES (review on sight) ──
+  • MONSTER BLOOM-GLOW — RE-ENABLED 2026-06-21 (Mark: "Monsters have a red lightbloom when in viewport of FPV or
+    TOP DOWN radius"). Reverses the 2026-06-13 disable ("turn off reflections / glossy sheen", was an inline kill at
+    the bloomSprite add ~line 9388). Now defaults ON + forced RED (0xdc3545, the radar/pedestal threat red) via the
+    initial bloom material (~9357) + the add gate `window._monsterBloom !== false` (~9392). One additive sprite per
+    visible monster on layer 0 (FPV) + layer 3 (top-down); follows the wrapper's room-cull so it only glows in view.
+    FPS off-switch: window._monsterBloom=false. Revert to the old cyan/goblin tint: window._monsterBloomRed=false. — Claude, per Mark 2026-06-21.
+  • COMBAT INACTION-PAUSE — NOT a disable (resolved breadcrumb, 2026-06-20). History: briefly disabled when it kept
+    false-firing in the cabaret (global anyHostile counted hostiles rooms away; the init default `= true` even defeated
+    a guard-only fix). Now RE-ENABLED for REAL combat only (Mark: "show up in combat perfectly … not when not in
+    combat"): the trigger (~line 28060) requires BOTH _lastCombatVisible (combat HUD up; cabaret-excluded at source)
+    AND !_playerInCabaret (player not on a roomId-1 tile — structurally bars the pause from the show room). Init default
+    is back to `true` (~line 1969). Off-switch: window._pauseOnInaction = false. — Claude, per Mark 2026-06-20.
+  • PEDESTAL render-loop STATE→VISUAL if-else — REPLACED by data table 2026-06-11 (pedestal centralization,
+    Worker 1). WHAT/WHERE: the hard-coded selected/gaming/hostile/ally/idle material+spin+ring if-else that
+    lived in the monsterWrappers render loop (was ~line 26960-27124) is GONE — the policy is now the
+    PEDESTAL_STATE table + resolvePedestalState()/applyPedestalState() (~line 8745) driven by Oni-Baba's
+    window.ONIBABA_PEDESTAL_POLICY. Visuals byte-identical (same shared materials, same spin rates). The legacy
+    `baseSpinCore`/`ud.pedestalSpinCore` mesh (built permanently-hidden at ~line 9180) NO LONGER has any
+    render-loop spin/visibility handling — applyPedestalState only defensively force-hides it; the mesh + its
+    userData handle are kept for save/back-compat but are inert. Re-add path: revert the pedestal hunk of this
+    commit. WHY: single source of truth for the monster combat-visual language + kills the undefined
+    _PED_*_MAT_NEUTRAL latent bug. — Worker 1, per spec ONIBABA_PEDESTAL_CIRCLE_CENTRALIZATION_2026-06-11.md.
+  • HUNGRY-GHOST CABARET SWARM — REMOVED 2026-06-20 (Mark: "remove the ghosts. that is not what I wanted.").
+    WHAT/WHERE: the whole feature is deleted — the GLB cache + loader (was ~line 6469, hungry-ghost.glb); the
+    _hungryGhosts array + _spawnHungryGhosts / _disposeHungryGhosts / _tickHungryGhosts (was ~line 9998); the
+    cabaret-attack trigger in _applyMonsterDamage (was ~line 24330); and the _tickHungryGhosts(dt) frame-loop call
+    (was ~line 27339). WHY: Mark reversed the just-added swarm — wrong direction, and the ghosts fell under the stage.
+    2026-06-20 UPDATE: hungry-ghost.glb is used again as a FIRST-CLASS monster model through mobSpawns /
+    buildMonsterEntity. The old swarm feature remains removed; do NOT revert the old swarm hunk to add ghosts.
+    Re-add path for the old swarm only: revert the ghost hunk of commit 746e6ef. — Claude, per Mark 2026-06-20.
+  • ENGLISH-ONLY FLOOR DECALS (cabaret hall) — REMOVED / DISABLED 2026-06-19 (Mark "crapfest of logos … get rid of
+    the floor logos that don't have english + kanji — those were old legacy").
+    WHAT/WHERE: (1) the english-only "ORIGAMI / UNDERWORLD" ghost floor-title decal (was ~line 4355, in
+    _placeMoonPhaseDecals) is DELETED — its role as the floor TITLE is taken by the BOTH-LANGS cabaret `_fl` decal
+    (ORIGAMI / UNDERWORLD / 折り紙地獄, ~line 7355), re-anchored 2 tiles ahead of spawn (was the stale `_cz+16`).
+    (2) the english-only "Welcome!" hanging banner (~line 4346) is gated OFF behind window._welcomeBanner — it hung
+    one tile ahead of spawn at rafter height and OCCLUDED the stage marquee (same failure as the rafter beam already
+    pulled there), and isn't part of the title → moonphase → marquee read order. WHY: line up the floor decals on the
+    stage centerline in ONE clean read order from the start position + drop legacy english-only art. RELATED (not
+    disables): moon-phase ward moved to the −4 lane (below the title); floor-1 spawn re-centered onto the cabaret cx
+    in DungeonChain.js. RESTORE: window._welcomeBanner=true re-shows the banner; the deleted english title lives in
+    git history (revert the _placeMoonPhaseDecals edit). — Mark 2026-06-19.
+  • OLD BLACKJACK POPUP ON GAMBLING-MONSTER ARRIVAL — SUPERSEDED 2026-06-19 by the new WAGER guidebook (Mark GO).
+    WHAT/WHERE: the two approach_gaming ARRIVAL sites (~line 14901 no-bow, ~line 15022 after-bow) now call
+    window._openWagerGuide(w) — which posts WAGER_INVITE → opens the WAGER guide (3×3 grid) — INSTEAD of
+    window._triggerBlackjackSession() (which posts SHOW_BLACKJACK, the old popup). WHY: WAGER redesign — the
+    monster walking to the player should open the new guidebook flow, not the legacy blackjack screen.
+    SCOPE: ONLY the approach-arrival path is changed. _triggerBlackjackSession + SHOW_BLACKJACK are otherwise
+    INTACT and still reachable from the direct click/melee action (~line 25381) and the def (~line 28519+) for
+    the casino seat. RESTORE: swap the two _openWagerGuide(w) arrival calls back to _triggerBlackjackSession(). — Mark GO, 2026-06-19.
+  • MAPGEN L2+ PROCEDURAL GENERATION — REPLACED 2026-06-18 by DungeonChain.js ("main hall + side rooms", Mark GO).
+    WHAT/WHERE: generateCastleMap() (~line 1290) now dispatches DUNGEON_LEVEL≥1 (was ≥2; FLOOR 1 joined 2026-06-19) to
+    window.DungeonChain.generateDungeonMap instead of MapGen. WHY: new dungeon system — NetHack walled rooms · single
+    shoji door at each wall midpoint · branching main hall · cabaret at id 1 every floor · casino = stairs + per-floor
+    loop at the deep end. FLOOR 1 uses a level===1 HEAD variant: fixed 6×6 cabaret (id 1) + a start-HALLWAY landing
+    (id 0, ad posters) + the greeters + starter cards, THEN a procedural body. MapGen.generateDungeonMap +
+    generateFloor1HandAuthoredMap are RETAINED in js/v8/map/MapGen.js as the fallback; window._floor1HandAuthored=true
+    reverts Floor 1 to the old hand-authored map. Save: generatorVersion 'chain-1'→'chain-2' discards old-save monster
+    state on load (all floors). RESTORE: window._floor1HandAuthored=true, revert _minProcFloor/the ≥1 branch in
+    generateCastleMap, or drop the DungeonChain.js script tag. — Mark GO 2026-06-18 (L2+) / 2026-06-19 (L1).
+  • FLOOR-1 CABARET WALL-RING — DROPPED 2026-06-19 (Mark GO, "hybrid: real cabaret + procedural body"). WHAT/WHERE:
+    DungeonChain.js _genLevel===1 head — after carving the cabaret (id 1), the head overwrites its NetHack wall ring to
+    FLOOR so the WHOLE 6×6 is id-1 floor (thin-walled, like the hand-authored cabaret). WHY: the carved wall ring made
+    the cabaret render generic solid wall tiles with the medallion wall-panels stuck BEHIND them, and threw the emitted
+    bounds off by a tile so the wallpaper/clerestory/stage-anchor/brand-marquee landed wrong (brand over the stage).
+    Bounds now = floor extent → the engine draws id1↔void perimeter panes the panels cover, and all the cabaret dress
+    math lands right for free. The start-HALLWAY (id 0) KEEPS its wall ring (its ad posters need wall tiles). RESTORE:
+    window._floor1HandAuthored=true, or remove the cabaret ring-drop loop in the head. — Mark GO 2026-06-19.
+  • CABARET WING-WASH SPOTLIGHT (3rd succubus _mkFaceSpot) — DISABLED by default 2026-06-16 (FPS lighting
+    remediation, Mark GO). WHAT/WHERE: the 3rd layer-6 SpotLight in the succubus FACE+WING block (~line 6151,
+    _buildCabaretStage, search "WING-WASH"). WHY: the engine is FILL-bound (cost ≈ pixels×lights, FPS.md §1);
+    a layer-6 spot still sits in the per-fragment light-loop — layers stop visual SPILL, not fill cost (the
+    "layer-6 = FPS-FREE" claim was wrong, FPS_TRICKS E14). The face+wings spots already read the same area.
+    RESTORE: window._sucWingWash=true (then reload). — Mark GO, 2026-06-16.
+  • SLOT-MACHINE CAST POINTLIGHT (_slotLight) — DISABLED by default 2026-06-16 (FPS lighting remediation,
+    Mark GO). WHAT/WHERE: the layer-1 PointLight in front of the cabaret slot (~line 7280, search
+    "window._slotLightOn"). WHY: even a layer-1 PointLight is in the per-fragment light-loop = fill on every
+    FPV pixel; the slot's emissive bulb + faceplate carry the glow without a real light. RESTORE:
+    window._slotLightOn=true (then reload). — Mark GO, 2026-06-16.
+  • NOTE (not a disable, tuning revert) 2026-06-16: succubus cone angle reverted π/5→π/7 (line ~6128,
+    window._sucSpotAngle) and the WINGS spot reverted angle π/4→π/5 + reach 6.0→4.5 (line ~6150) — both undo
+    the fill-wrong widen (transparent overdraw + spotlight fill, remediation Part 2). KEPT: clerestory room
+    PointLight (line 3134, Mark's "monsters not shadow-fuzzed" fill) + the bar/tavern PointLight (line 6414,
+    deliberately reused as the SakeTavern lantern light — one light for both, NOT droppable).
   • INLINE MACHINE-CLICK DELEGATE (_tryMachineClick) — REMOVED 2026-06-15 (Mark: "total refactor so it
     doesn't keep stop working when anything is changed with the dungeon. It needs to be segmented out on
     its own"). WHAT/WHERE: the slot+vending click delegate that lived in _tryMachineClick (was inside the
@@ -158,18 +242,26 @@
     RELEASED back to legacy AI instantly). WHY: kill the multi-writer facing war (shake / walk-in-place /
     wedged-bow) by giving each monster ONE transform owner. DEFAULT: window._AI_V2=false — everything
     runs exactly as before. RESTORE live: window._AI_V2=false (no reload; agents auto-release).
-  • MONSTER FLEE / FETCH / RETREAT — DISABLED 2026-06-12 (Mark: "remove fleeing for right now. every
-    monster attacks when hostile"; Worker 1). Global kill-switch `window._NO_FLEE=true` (defined just
-    above `_setMonsterHostile`, ~line 12070) gates EVERY flee/fetch/retreat entry so hostile monsters
-    fight to the death: imp panic-flee in _setMonsterHostile (~12079) + the attack-alert cascade (~12340);
-    goblin "must get help first" via _forceGoblinFleeForHelp (~12609) + its hostile-tick gate (~13725);
-    low-HP fetch-reinforcements (~13742); low-HP flee in _applyMonsterDamage (~23018); Oni-Baba 'retreat'
-    order (~11991); boulder-panic dodge (~15957). PLUS a rescue at the flee + fetch state-handler tops
-    (~14459 / ~14780) snaps any monster already in flee/fetch (e.g. a save from before the switch) back
-    to hostile. EXEMPT: the cabaret succubus performer flee (separate _succubusFlee system, ~6434) —
-    Mark kept it (she never fights back). Telemetry intact: hostile MONSTER_AI_STATE still posts; only the
-    flee-state posts stop. WHY: monsters fleeing on contact made combat unplayable. RESTORE live with
-    window._NO_FLEE=false (no reload) — every gate is a single flag check; nothing was deleted.
+  • MONSTER FLEE — REMOVED again 2026-06-16 (Mark: "remove fleeing for now, it's totally messed up").
+    window._NO_FLEE now DEFAULTS **true** → the kill-switch gates EVERY flee/fetch/retreat origin →
+    monsters go hostile on hit and FIGHT TO THE DEATH, none run away. The 2026-06-15 FLEE-RARITY ≤30%
+    gates remain in code but are DORMANT (inside !_NO_FLEE checks). FUTURE: rebuild the legacy imp-alert-
+    runner (one imp bolts to alert adjacent rooms) as a clean isolated single-monster behavior (SPEC_P6
+    "elected runner"), NOT this cascade. Re-enable rarity live: window._NO_FLEE=false. [Historical: the
+    2026-06-15 rarity model — flee only at <=30% HP — superseded by this removal.]
+    The dormant ≤30% gates (active only if _NO_FLEE is set false) live at (search "FLEE-RARITY"):
+    _forceGoblinFleeForHelp early-return; imp panic-flee in _setMonsterHostile + _alertRoom (+ their
+    healthy-imp else->hostile); hostile-tick fetch fetchFrac capped 0.30; low-HP flee in
+    _applyMonsterDamage flat maxHp*0.30. EXEMPT from the kill-switch by design: cabaret succubus
+    performer flee (separate _succubusFlee system). Nothing was deleted — flip _NO_FLEE=false to bring
+    the rarity model back; rebuild the imp-runner clean before relying on any of it.
+  • RANGED AUTO-AIM around-corner / no-LOS lock — DISABLED by default 2026-06-16 (Mark: "FPV detection
+    only — it still targets monsters through walls / no LOS"). The ranged auto-fire picker locked the
+    nearest monster even with NO line-of-sight (`losBest || anyBest`) and curved the shot around the
+    corner via _findCornerViaPoint — a deliberate 2026-06-03 assist, now reversed. Now LOS-only:
+    `picked = losBest` (search "FPV-AIM-ONLY", ~Engine8.html:18762). TAB + soft auto-aim already LOS-gate
+    (`_hasLineOfSight` correctly blocks thin-wall panes + walls + closed doors, ~9826-9844). RESTORE the
+    around-corner lock: window._fpvAimOnly = false.
   • CABARET SHOW-DIM (_showDim RAF) — REMOVED 2026-06-12 (Mark: "just dont shut out the lights and remove
     that fucked up code"). WHERE: the block after the stage face-lights note (~line 5660) dimmed
     ambient/hemi/dir to 25% within 16u of the Starlet — the "lights down → green tint up" trigger. Room
@@ -289,6 +381,37 @@
     loop which re-fires it every ~2.5s idle). Play call commented out at ~7791 (covers BOTH
     manual + auto melee — both route through that fn). Preload entry ~7388 left (harmless,
     no play). WHO: Opus. RESTORE: un-comment the _playSfxFile call at ~7791.
+  • AUTO-MELEE behavior — RE-ENABLED 2026-06-16 (Mark: "should be automatically attacking the
+    monsters when nothing happens — but if no melee weapon = auto pause combat"). It had been
+    silently removed (bare `// Melee autoattack removed` inline at ~16190/~17361 — exactly the
+    buried-kill this register exists to prevent). Re-enabled in _tickCombatAssist (~16190), GATED
+    on window.ownedKatana (a real melee weapon equipped): idle ≥ window._autoMeleeIdleS (1.0s) +
+    nearest hostile within window._autoMeleeR (2.6wu) → auto-fire _lastMeleeAction on that foe at a
+    window._autoMeleeCdMs cadence (1500ms). UNARMED players are NOT auto-swung — they fall through
+    to the inaction-pause (~26944), whose suppression is now also gated on ownedKatana. The original
+    removal reason (the buzzing swing SFX) is already independently fixed (see the entry above), so
+    the auto-loop is silent. DISABLE: window._autoMeleeOff = true.
+  • DAGGER qty rule (qty 1 = MELEE knife, qty ≥2 = thrown RANGED) — ADDED 2026-06-16 (Mark, restoring a
+    deleted rule + "make melee mandatory"). Cross-iframe: PANELS owns qty + decides; sends meleeMode on a
+    lone-dagger fire and SET_PLAYER_ARMED on every deck rebuild. ENGINE: _executeMeleeCard exempts DAGGER
+    from the unarmed→PUNCH downgrade (~10523) so the lone dagger STABS; FPV dispatch routes a meleeMode
+    DAGGER through melee (~25408); SET_PLAYER_ARMED sets window.ownedKatana (~10703). The LAST dagger
+    (qty 1) cannot be thrown/consumed (enforced Panels-side) — it's your guaranteed melee fallback.
+  • ROGUE 60-FPS CAP — REMOVED 2026-06-17 (Mark; the worker that shipped it was fired for claiming "46fps
+    is fine"). The SET_PERF_MODE 'aaa' branch (~27761) set window._targetFps=60 while the Panels HUD button
+    (NewOrigami.Panels.html ~16792) labelled it "AAA (120)" — a hard 60-cap disguised as 120. At 60-target +
+    full 4K (DPR 2) + shadows the achieved rate sank to ~46 (the bogus "fill wall"). FIX: AAA now targets a
+    TRUE 120; the frame-gate (~25640, 1000/_targetFps × 0.82) still caps at the 120 CEILING Mark wants.
+    'turbo' (DPR 1.0 + shadows/bloom off) remains the opt-in low-quality 120 fallback. If native-4K can't
+    hold 120 it now runs UNCAPPED up to 120 — no artificial limiter. RESTORE (not advised): set 60 again.
+  • B015 ADAPTIVE-RESOLUTION DPR-SHED — REMOVED 2026-06-17 (Mark). The 0.5s loop in loop() (~27627) that
+    ran `_applyPixelRatio(_curDPR ± 0.25)` to shed/add render resolution by measured fps — the "blurry
+    under load" runtime throttle from the rogue B015 self-assignment (commit 9199cc2, 2026-05-31). It was
+    already gated OFF (window._adaptiveRes false), now the shed-math BLOCK is deleted so it can't be
+    re-armed. DPR pinned at boot to min(devicePixelRatio,2); `_applyPixelRatio` kept as the resize-only
+    setter (+ the SET_PERF_MODE turbo/aaa fixed-DPR calls). Anti-throttle law: recover fps by cutting
+    lights/overdraw + culling, never resolution-shedding. RESTORE (banned without Mark GO): re-add the
+    proj<55 / proj>90 shed branches. Forensics: plans/THROTTLE_FORENSICS_AND_REMOVAL_2026-06-13.md.
   • Monster silhouette — DISABLED 2026-06-01 (Mark explicit STOP). _buildMonsterHull (~4361)
     early-returns: no hull, no glow shells; monsters render PLAIN. WHY: the inverted-hull +
     additive-glow shells produced a persistent white-blue CLOUD on low-poly / scaled-up models
@@ -399,9 +522,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Three.js r128 — VENDORED LOCALLY (was cdnjs). No third-party CDN → no Tracking-Prevention storage block + works offline (freeware mission). -->
   <script src="./vendor/three/r128/three.min.js"></script>
+  <script src="js/v8/map/DungeonChain.js?v=chain-8-2wide-hall-b"></script><!-- new L2+ dungeon generator (sets window.DungeonChain before the module runs) -->
   <!-- Localization tables — exposes window.t, tCard, tMonster, tLog -->
   <!-- defer: runtime-only consumers (game module is itself deferred) -->
-  <script defer src="js/data/i18n.js"></script>
+  <script defer src="js/data/i18n.js?v=v8493-skill"></script>
   <!-- NewOrigami.Cards.js removed in 541fb95 — card data now lives in data/cards.json + data/loot.json, loaded on boot. -->
 
   <script src="./vendor/three/r128/js/loaders/GLTFLoader.js"></script>
@@ -1043,6 +1167,6 @@
 
   <!-- Error overlay -->
   <div id="error-overlay" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(220,53,69,0.9); color:#fff; padding:8px 16px; border-radius:4px; font-family:monospace; font-size:12px; z-index:10000; border:1px solid #ff4444; box-shadow:0 4px 12px rgba(0,0,0,0.5); pointer-events:none; letter-spacing:1px;"></div>
-<script type="module" src="./engine8.main.js?v=sc1"></script>
+<script type="module" src="./engine8.main.js?v=gold-2026-06-21"></script>
 </body>
 </html>

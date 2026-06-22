@@ -26,8 +26,8 @@
   <meta name="contact" content="dev@ideasoftware.studio"/>
   <meta name="trademark" content="Origami Dungeon is a Trademark of Idea Software Studio."/>
   <title>Origami Dungeon — Idea Software Studio</title>
-  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <!-- favicon = brand logo (Mark 2026-06-16: assets/brand/starlette.png; root favicon.ico was 0 bytes) -->
+  <link rel="icon" href="assets/brand/starlette.png" type="image/png">
   <!-- PWA web app manifest — makes the game installable (add-to-home-screen / standalone). -->
   <link rel="manifest" href="manifest.json">
   <meta name="application-name" content="Origami Underworld">
@@ -105,7 +105,7 @@
 <body>
 
   <div id="fpv-viewport">
-    <iframe id="engine-iframe" src="NewOrigami.Engine8.html?v=8.1.346" allow="fullscreen" title="Origami 3D Engine Viewport"></iframe>
+    <iframe id="engine-iframe" src="NewOrigami.Engine8.html?v=8.1.420" allow="fullscreen" title="Origami 3D Engine Viewport"></iframe>
   </div>
 
   <!-- Atmospheric "spooky grade": FREE compositor overlay over the 3D view (cold vignette + grain +
@@ -116,7 +116,7 @@
   <div id="chat-overlay" aria-live="polite"></div>
 
   <div id="ui-viewport">
-    <iframe id="panels-iframe" src="NewOrigami.Panels.html?mode=dock&v=8.1.165" title="Origami UI Panels"></iframe>
+    <iframe id="panels-iframe" src="NewOrigami.Panels.html?mode=dock&v=8.1.195" title="Origami UI Panels"></iframe>
   </div>
 
   <div id="v8-badge">ORIGAMI v8 ◆ 折り紙</div>
@@ -162,8 +162,8 @@
 
   <!-- <script src="NewOrigami.OniBaba.js"></script> -->
   <!-- defer: both files have only runtime consumers (postMessage handlers, gameplay calls) -->
-  <script defer src="js/data/i18n.js?v=v8329" integrity="sha384-d6SZ2JBpW7jhr5rzHMvMdi0VHlkVaEh9UblwQf3qonXzK44nDI+Ffa6ujsz3C8HZ"></script>
-  <script defer src="js/v8/OniBaba8.js?v=8.1.267" integrity="sha384-osv8vaCCRkiKO/xojykKJz9U7DBKHFMy2GQQg9QH32VLVViJPLc88xxwnEA55ywl"></script>
+  <script defer src="js/data/i18n.js?v=v8577-ghost"></script>
+  <script defer src="js/v8/OniBaba8.js?v=8.1.268"></script>
 
   <script>
     window.onerror = function(message, source, lineno, colno, error) {
@@ -247,9 +247,13 @@
         case 'HIDE_BLACKJACK':
         case 'BLACKJACK_PAYOUT':
         case 'SLOT_MACHINE_PLAY':
+        case 'SHOW_SLOTS_INTRO':
         case 'PERF_MONITOR_UPDATE':
         case 'PIP_DISABLED_STATE':
         case 'ENGINE_LOAD_PROGRESS':
+        case 'CABARET_WELCOME':
+        case 'WAGER_INVITE':   // gambling monster reached player → open the WAGER guide (Mark 2026-06-19)
+        case 'WAGER_CLOSE':    // player walked away / ESC → close the WAGER guide (Mark 2026-06-19)
           to(panels, ev); break;
         // Engine → Oni-Baba pipeline (per-monster brain).
         case 'MONSTER_INTEL': case 'MONSTER_SPIRIT_REPORT':
@@ -325,6 +329,7 @@
         case 'VENDING_BUY': case 'VENDING_CABINET_CLOSED':
         case 'BLACKJACK_DEDUCT_GOLD': case 'BLACKJACK_ADD_GOLD': case 'WAGER_RESOLVE':
         case 'QUICK_GAMBLE_START': case 'QUICK_GAMBLE_END':
+        case 'GAMING_WHEEL_ON': case 'GAMING_WHEEL_OFF':   // WAGER → roulette wheel (Mark 2026-06-18): handleWager posts these; without the relay they never reached the engine handler (28151) → the wheel never showed
           // Cache sidebar state locally and forward to engine
           try{
             window.__panelsSidebarOpen = (ev.type === 'SIDEBAR_OPEN');

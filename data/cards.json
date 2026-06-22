@@ -306,6 +306,25 @@
     "label": "🗡️ THRUST"
   },
   {
+    "id": "thrust_skill",
+    "name": "THRUST",
+    "type": "SKILL",
+    "el": "SKILL",
+    "kanji": "技",
+    "desc": "Melee mastery.",
+    "attr": "+10% HIT · +10% DMG",
+    "dice": 0,
+    "dot": 0,
+    "animation": "none",
+    "icon": "fa-hand-fist",
+    "fpvColor": 8380512,
+    "fpvDmg": 0,
+    "fpvTrauma": 0,
+    "fpvRange": 0,
+    "label": "✨ SKILL",
+    "skillBonus": { "hitChance": 0.10, "damageMult": 0.10, "target": "MELEE" }
+  },
+  {
     "id": "strong_attack",
     "name": "HARD ATTACK",
     "type": "MELEE",

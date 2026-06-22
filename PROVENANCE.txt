@@ -1,29 +1,14 @@
-Origami-Distribution — SC (Secure Codebase) provenance
-Cut 2026-06-15 by the Researcher/Archivist seat on Mark's GO.
-(Worker E retired + untrusted; E's pipeline was AUDITED clean line-by-line, then reused — never run blind.)
+Origami Underworld — SC (Secure Codebase) provenance
+Cut 2026-06-22 by the clean-room pipeline (build.mjs v2, ZERO Worker-E lineage).
 
-GOLD BASE: d84e62b  (tag: gold-2026-06-15)
-  Complete, self-contained, Mark-tested-green room1/casino floor.
-  Supersedes the broken aecae63 (which imported MachineInteraction.js without shipping it)
-  and the stale 2026-06-07 Worker-E build.
-
-ARMOR (a11y-safe — Mark's binding ruling: NO control-flow/anti-debug/self-defending; protects FPS + screen-reader):
-  SC-1 externalize : inline Engine8 module -> engine8.main.js   (1.39 MB -> 690 KB obfuscated, single line)
+GOLD BASE: gold-2026-06-21
+ARMOR (a11y-safe — NO control-flow/anti-debug/self-defending; protects FPS + screen-reader):
+  SC-1 externalize : inline Engine8 module -> engine8.main.js (esbuild bundle)
   SC-2 minify      : esbuild es2019, no source maps
-  SC-3 obfuscate   : javascript-obfuscator, stringArray(base64) + mangle
-  Hardened         : engine8.main.js + 24 js/v8 modules (0 harden failures)
-  Bridge preserved : denylist re-derived from live gold source — 445 reservedNames / 196 reservedStrings.
-                     window._* globals + postMessage wire-protocol + save-keys + card taxonomy are NOT mangled,
-                     so the cross-iframe machine still talks.
-  vendor/          : THREE.js r128 + loaders shipped LOCALLY (no CDN dependency — offline-capable freeware).
-
-SHIP MODEL: DEFAULT-DENY allowlist + leak-guard PASS.
-  EXCLUDED from public git: pipeline/ (build tooling + denylist = a de-armor roadmap), *.map, and all internal
-  process docs (WORKER_*/ORCHESTRATOR_*/HALL_OF_*/MEMORY.md/.env) — verified absent.
-
-VALIDATION: headless boot GREEN — window.__engineReady in 637ms, 0 uncaught errors, 0 missing-asset 404s
-  (reused the dev scripts/smoke.js harness, retargeted at the dist). Plus Mark's in-game testing on the gold.
-
-DEFERRED (for the streamlined one-command pipeline — handed to WORKER):
-  automate SC-1 externalize · explicit LIGHT/STRONG profile map · verify-parity.mjs · `npm run dist` wrapper
-  · prune dead model backups (assets/models/backup, *.crate-backup) currently shipped verbatim.
+  SC-3 obfuscate   : javascript-obfuscator, stringArray(base64) + mangle, renameGlobals=false
+  Hardened         : 29 files (0 harden failures)
+  Bridge preserved : 569 reservedNames / 765 reservedStrings,
+                     re-derived from live gold. window._* globals + postMessage protocol + save-keys +
+                     card taxonomy (MELEE/RANGED/SPELL/ITEM) are NOT mangled.
+  vendor/          : THREE r128 + loaders shipped LOCALLY (offline-capable freeware).
+SHIP MODEL: DEFAULT-DENY allowlist + leak-guard PASS — no internal docs/secrets in dist.
