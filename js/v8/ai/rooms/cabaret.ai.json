@@ -1,0 +1,47 @@
+{
+  "roomId": 60,
+  "_comment": "Cabaret main hall. Designer- (or offline-LLM-) authored. The engine CONSUMES this; no monolith edit needed to change room behavior. Loaded via constructor.loadRoomScript(json).",
+
+  "ambientScripts": [
+    {
+      "id": "watch_show",
+      "state": "SPECTATE",
+      "target": "succubus",
+      "utility": { "base": 0.6, "sociability": 0.3 }
+    },
+    {
+      "id": "gamble",
+      "state": "SCRIPTED",
+      "scene": "approach_then_gamble",
+      "target": "blackjack_goblin",
+      "utility": { "base": 0.3, "aggression": -0.2 }
+    },
+    {
+      "id": "greet_then_engage",
+      "state": "SCRIPTED",
+      "scene": "greet_then_engage",
+      "utility": { "base": 0.35, "sociability": 0.2 }
+    }
+  ],
+
+  "scenes": {
+    "greet_then_engage": [
+      { "do": "moveTo", "target": "$peer", "reach": 1.2 },
+      { "do": "play",   "clip": "bow", "hold": 0.5 },
+      { "do": "wave" },
+      { "do": "face",   "target": "$player" },
+      { "do": "transition", "state": "HOSTILE", "when": "playerHostile" }
+    ],
+    "approach_then_gamble": [
+      { "do": "moveTo", "target": "blackjack_goblin", "reach": 2.2 },
+      { "do": "face",   "target": "blackjack_goblin" },
+      { "do": "play",   "clip": "idle", "hold": 1.0 }
+    ]
+  },
+
+  "roles": {
+    "cab-gob-1": ["watch_show", "gamble", "greet_then_engage"],
+    "cab-gob-2": ["watch_show", "greet_then_engage"],
+    "cab-imp-fan": ["watch_show"]
+  }
+}

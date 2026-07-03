@@ -1,0 +1,8 @@
+# SC (Secure Codebase) — public-distribution repo. Ships the ARMORED RUNTIME ARTIFACT ONLY.
+# The build tooling + reserved deny-list are a de-armor roadmap (they reveal exactly which
+# names/strings were preserved + the obfuscation profile). NEVER ship them to public git.
+pipeline/
+
+.DS_Store
+*.map
+*.log
