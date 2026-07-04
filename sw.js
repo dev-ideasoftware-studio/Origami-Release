@@ -16,7 +16,7 @@
  * To restore offline-play later, revert this file to the pre-mandate
  * cache-first version in git history.
  */
-const CACHE = 'origami-v8-2026-07-04-v8955-mobile-boot-rescue';
+const CACHE = 'origami-v8-2026-07-04-v8960-mtrace-crash-survivor';
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();
