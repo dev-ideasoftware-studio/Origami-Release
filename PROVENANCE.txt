@@ -1,7 +1,7 @@
 Origami Underworld — SC (Secure Codebase) provenance
 Cut 2026-07-04 by the clean-room pipeline (build.mjs v2, ZERO Worker-E lineage).
 
-GOLD BASE: gold-2026-07-04-c1d2091
+GOLD BASE: gold-2026-07-04-c658db3
 ENTRY: NewOrigami.9.html (public v9 cut)
 ARMOR (a11y-safe — NO control-flow/anti-debug/self-defending; protects FPS + screen-reader):
   SC-1 externalize : inline Engine8 module -> engine8.main.js (esbuild bundle)
