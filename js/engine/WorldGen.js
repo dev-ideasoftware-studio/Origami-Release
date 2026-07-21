@@ -591,7 +591,7 @@ generateMap() {
                     });
                     impAdded += 1;
                   }
-                };);
+                });
             },
 
 carveFuzzyHallway(start, end) {
