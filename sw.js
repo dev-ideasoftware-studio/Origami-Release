@@ -16,7 +16,7 @@
  * To restore offline-play later, revert this file to the pre-mandate
  * cache-first version in git history.
  */
-const CACHE = "origami-v8-2026-07-14-v9328-dist-prep";
+const CACHE = "origami-v8-2026-07-21-v9622-matte-plastic-shell";
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();

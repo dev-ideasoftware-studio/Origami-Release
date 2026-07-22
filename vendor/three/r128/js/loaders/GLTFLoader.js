@@ -2378,7 +2378,15 @@
 				// However, we will copy UV set 0 to UV set 1 on demand for aoMap
 				if ( mapDef.texCoord !== undefined && mapDef.texCoord != 0 && ! ( mapName === 'aoMap' && mapDef.texCoord == 1 ) ) {
 
-					console.warn( 'THREE.GLTFLoader: Custom UV set ' + mapDef.texCoord + ' for texture ' + mapName + ' not yet supported.' );
+					// Console warning silenced (2026-07-19) — see the register block at the top of
+					// NewOrigami.Engine9.html for the full record. DIAGNOSTIC ONLY — nothing about rendering changes.
+					// r128 hard-wires every map except aoMap to UV set 0, so a glTF that declares normalMap on UV1
+					// is ALREADY being sampled with UV0 whether or not this line runs; the warning just narrates it,
+					// once per material per load, which floods the console on our multi-material monster GLBs.
+					// The real fix is asset-side (re-export the offending model with its normal map on UV0) — this
+					// only removes the noise, so if a model's surface detail ever looks mis-mapped, THIS is the clue
+					// you would otherwise have had. Restore: un-comment the line below.
+					// console.warn( 'THREE.GLTFLoader: Custom UV set ' + mapDef.texCoord + ' for texture ' + mapName + ' not yet supported.' );
 
 				}
 
