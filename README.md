@@ -7,7 +7,7 @@ or paywall. Open the game, choose your path, and play.
 ## A software memoriam
 
 This game was created in loving memory of my mother and father, whose family
-heritage was Japanese and American.
+heritage was Japanese and American.  My mom died during Covid... my dad died of a broken heart.
 
 My dad loved each of the three kinds of games folded into Origami Underworld:
 
