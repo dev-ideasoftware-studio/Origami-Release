@@ -16,7 +16,7 @@
  * To restore offline-play later, revert this file to the pre-mandate
  * cache-first version in git history.
  */
-const CACHE = "origami-v8-2026-07-27-glowbar";
+const CACHE = "origami-v8-2026-08-06-ogre-face-fix";
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();
