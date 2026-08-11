@@ -4,6 +4,16 @@ Origami Underworld is a browser-based freeware dungeon adventure from Idea
 Software Studio. There is no purchase price, subscription, advertising tier,
 or paywall. Open the game, choose your path, and play.
 
+## A Fantasy Rock & Roll RPG
+
+Fair warning about the soundtrack: this is a **Fantasy Rock & Roll RPG**. The
+music is original **haiku rock** — short verses in Japanese, English, and
+French, sung over everything from soft J-pop to hard EDM, performed in-world
+by the cabaret's own star. It is part of the underworld's soul, but if it
+isn't your cup of tea, **music can be disabled at any time** (the music icon
+next to the input field, or the settings page) — the game plays fine without
+it and you won't miss anything you need.
+
 ## A software memoriam
 
 This game was created in loving memory of my mother and father, whose family
