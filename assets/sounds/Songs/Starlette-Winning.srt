@@ -4,23 +4,33 @@
 
 2
 00:00:14,000 --> 00:00:22,000
-No matter how many times I fall, I keep moving forward
+何度でも　転んでまた進む
+Fall, rise, try again — every step has made you strong
+Tombe et relève-toi — chaque pas t'a rendu plus fort
 
 3
 00:00:22,000 --> 00:00:28,000
-You are strong
+君は強い
+You should be proud now
+Sois fier de toi
 
 4
 00:00:30,000 --> 00:00:32,000
+何度でも
 Fall, rise, try again
+Tombe et relève-toi
 
 5
 00:00:32,000 --> 00:00:35,000
-Every step is made you strong
+転んでまた進む
+Every step has made you strong
+Chaque pas t'a rendu plus fort
 
 6
 00:00:35,000 --> 00:00:40,000
+君は強い
 You should be proud now
+Sois fier de toi
 
 7
 00:00:40,000 --> 00:00:47,600
@@ -32,11 +42,15 @@ You should be proud now
 
 9
 00:01:00,400 --> 00:01:04,600
-This path is your own, no one else can choose your dream
+君の道　誰にも決められぬ
+This path is your own — no one else can choose your dream
+Ton chemin est tien — nul ne choisira ton rêve
 
 10
 00:01:04,600 --> 00:01:07,600
+夢へ行け
 Go and make it real
+Va le rendre réel
 
 11
 00:01:07,600 --> 00:01:29,000
@@ -44,19 +58,27 @@ Go and make it real
 
 12
 00:01:31,000 --> 00:01:38,000
-You came so far, I won't give up
+よく来たね
+Look how far you came
+Regarde ton chemin
 
 13
 00:01:38,000 --> 00:01:44,000
-The light of the day
+ここまで諦めず
+You never gave up on yourself
+Tu n'as jamais abandonné
 
 14
 00:01:45,000 --> 00:01:49,000
-Look how far you came, you never gave up on yourself
+よく来たね　ここまで諦めず
+Look how far you came — you never gave up on yourself
+Regarde ton chemin — tu n'as jamais abandonné
 
 15
 00:01:49,000 --> 00:01:52,000
-This little stage is yours
+君の勝ち
+This victory is yours
+Cette victoire est à toi
 
 16
 00:01:52,000 --> 00:01:56,000
@@ -64,4 +86,6 @@ This little stage is yours
 
 17
 00:01:56,000 --> 00:01:59,200
+君の勝ち
+This victory is yours
 C'est victoire et d'art

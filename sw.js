@@ -16,7 +16,7 @@
  * To restore offline-play later, revert this file to the pre-mandate
  * cache-first version in git history.
  */
-const CACHE = "origami-v8-2026-08-12-r43-monster-stats-panelsize";
+const CACHE = "origami-v8-2026-08-12-r48-winning-haiku-fr";
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();
