@@ -25,7 +25,8 @@
   
   <script src="./vendor/three/r128/three.min.e15.js?v=e15-unlit-blind-1"></script>
   <script src="./js/v8/ui/OrigamiCapsuleGauge.js?v=8.3.406-gauge-green"></script>
-  <script src="js/v8/map/DungeonChain.js?v=chain-8.3.430-special-room-doors"></script>
+  <script src="js/v8/a11y/A11yRegistry.js?v=a11y-8.3.565-p2"></script>
+  <script src="js/v8/map/DungeonChain.js?v=chain-8.3.570-cabwest"></script>
   
   
   <script defer src="js/data/i18n.js?v=v8602-first-aid"></script>
@@ -104,8 +105,8 @@ window.onerror=function(message,source,lineno,colno,error){console.log(`\u{1F409
 
   
   <div id="pip-frame">
-    <canvas id="pip-canvas"     width="1024" height="1024"></canvas>
-    <canvas id="pip-fpv-canvas" width="1024" height="1024" class="opacity-0"></canvas>
+    <canvas aria-hidden="true" id="pip-canvas"     width="1024" height="1024"></canvas>
+    <canvas aria-hidden="true" id="pip-fpv-canvas" width="1024" height="1024" class="opacity-0"></canvas>
     <div class="pip-overlay">
       <div class="pip-cinebar top"></div>
       <div class="pip-cinebar bottom"></div>
@@ -117,7 +118,7 @@ window.onerror=function(message,source,lineno,colno,error){console.log(`\u{1F409
   
   <div id="fs-map-overlay">
     <div id="fs-map-title">CASTLE — TOP DOWN</div>
-    <canvas id="fs-map-canvas" width="1024" height="1024"></canvas>
+    <canvas aria-hidden="true" id="fs-map-canvas" width="1024" height="1024"></canvas>
     <div id="fs-map-hint">CLICK MINIMAP OR PRESS M / ESC TO CLOSE</div>
     <button id="fs-map-close" aria-label="Close map">×</button>
   </div>
@@ -125,6 +126,6 @@ window.onerror=function(message,source,lineno,colno,error){console.log(`\u{1F409
 
   
   <div id="error-overlay" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(220,53,69,0.9); color:#fff; padding:8px 16px; border-radius:4px; font-family:monospace; font-size:12px; z-index:10000; border:1px solid #ff4444; box-shadow:0 4px 12px rgba(0,0,0,0.5); pointer-events:none; letter-spacing:1px;"></div>
-<script type="module" src="./engine9.main.js?v=gold-v8.3-2026-08-13-7d049cd"></script>
+<script type="module" src="./engine9.main.js?v=gold-v8.3-2026-08-15-8660ec3"></script>
 </body>
 </html>

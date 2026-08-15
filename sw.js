@@ -16,7 +16,7 @@
  * To restore offline-play later, revert this file to the pre-mandate
  * cache-first version in git history.
  */
-const CACHE = "origami-v8-2026-08-12-r50-blind-ends-hostility";
+const CACHE = "origami-v8-2026-08-15-r104-silentblade-out";
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();
