@@ -1,4 +1,4 @@
-/**
+/** [REF#DA-00025]
  * FloorCatalog.mjs — authored building identity before procedural geometry.
  *
  * P2 owns the semantic contract only. It intentionally does not import Three,
@@ -177,7 +177,7 @@ function validateBuilding(building, path, errors, expectation, isHeart = false) 
     validateDeck(building.roomDeck, `${path}.roomDeck`, errors, isHeart ? 2 : 6);
     if (!isHeart) {
         const budget = building.roomBudget || {};
-        // Mark 2026-08-03: "make sure each section 1-4 has 5-8 rooms each in them." Raised from the
+        // Mark 2026-08-03: "make sure each section 1-4 has 5-8 rooms each in them." Raised from the [REF#DA-00026]
         // authored 4–6. The floor still cannot fall below requiredRoles.length (4 cadence roles), so a
         // minimum of 5 keeps the TEACH/CHOICE/PRESSURE/RELIEF rhythm intact with a room to spare.
         if (budget.normalRoomMin !== 5 || budget.normalRoomMax !== 6) {
@@ -217,7 +217,7 @@ function canonicalize(value) {
     return value;
 }
 
-/** Stable, non-cryptographic content identity for recipe/save compatibility checks. */
+/** Stable, non-cryptographic content identity for recipe/save compatibility checks. [REF#DA-00027] */
 export function catalogHash(catalog) {
     const text = JSON.stringify(canonicalize(catalog));
     let hash = 0x811c9dc5;
@@ -228,7 +228,7 @@ export function catalogHash(catalog) {
     return `fnv1a32:${hash.toString(16).padStart(8, '0')}`;
 }
 
-/**
+/** [REF#DA-00028]
  * Return all structural failures instead of silently accepting a fallback.
  * A caller that wants a production recipe must call assertFloorCatalog first.
  */
@@ -314,7 +314,7 @@ export function assertFloorCatalog(catalog) {
     return report;
 }
 
-/**
+/** [REF#DA-00029]
  * P2 must never accidentally become a live-map permission grant. P5 must
  * replace this catalog policy under its own explicit Mark runtime GO.
  */
@@ -713,5 +713,5 @@ export function floorCatalogFor(floor) {
     return FLOOR_CATALOGS[Number(floor)] || null;
 }
 
-// Fail at import time in development/harnesses instead of letting P3 discover a bad authored packet.
+// Fail at import time in development/harnesses instead of letting P3 discover a bad authored packet. [REF#DA-00030]
 assertFloorCatalog(FLOOR_1_CATALOG);

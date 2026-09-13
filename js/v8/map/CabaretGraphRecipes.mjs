@@ -1,4 +1,4 @@
-/**
+/** [REF#DG-00001]
  * CabaretGraphRecipes.mjs — P3 deterministic mission graphs before geometry.
  *
  * This is deliberately a pure recipe layer. It consumes the authored P2 floor
@@ -56,7 +56,7 @@ function floorOf(value) {
     return floor;
 }
 
-/** Namespaced FNV-1a, so no persistent result consumes a shared random stream. */
+/** Namespaced FNV-1a, so no persistent result consumes a shared random stream. [REF#DG-00002] */
 export function keyedHash32(...parts) {
     const text = parts.map(part => String(part)).join('\u001f');
     let hash = 0x811c9dc5;
@@ -71,7 +71,7 @@ export function keyedSeed(...parts) {
     return `0x${keyedHash32(...parts).toString(16).padStart(8, '0')}`;
 }
 
-/**
+/** [REF#DG-00003]
  * Derives only the namespace ownership for a floor.  It deliberately accepts
  * floors that do not yet have an authored catalog: P3 may prove namespace
  * isolation across a future ten-floor run without pretending that an
@@ -411,7 +411,7 @@ function buildSectionCandidate({
             entryToSong: graph.entryToSong,
             returnToGate: [ids.song, ids.shortcut, ids.gate],
             raidToGate: graph.raidToGate,
-            // These two routes cross the declared floor-level HEART_GATE edge.
+            // These two routes cross the declared floor-level HEART_GATE edge. [REF#DG-00004]
             // P3 records the semantic crossing; P4/P5 own residency and geometry.
             returnToHeart: [ids.song, ids.shortcut, ids.gate, heartNodeId(floor)],
             raidToHeart: [...graph.raidToGate, heartNodeId(floor)],
@@ -966,7 +966,7 @@ export function deriveFloorRecipe({
     return deepFreeze(recipe);
 }
 
-/** Convenience surface for P4/P5 adapters: derives but never mounts a section. */
+/** Convenience surface for P4/P5 adapters: derives but never mounts a section. [REF#DG-00005] */
 export function sectionRecipeFor(recipe, sectionId) {
     const section = recipe?.sections?.find(candidate => candidate.id === Number(sectionId)) || null;
     return section || null;

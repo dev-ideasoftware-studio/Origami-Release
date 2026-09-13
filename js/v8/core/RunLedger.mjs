@@ -1,4 +1,4 @@
-/*
+/* [REF#CR-00100]
  * RunLedger.mjs — P1 durable run authority.
  *
  * The ledger deliberately stores semantic JSON snapshots, never Three.js roots,
@@ -226,7 +226,7 @@ export class RunLedger {
 
         if (pendingSnapshot && !pending.ok) this._report('pending-corrupt', null, { reason: pending.code });
         if (forceNew) {
-            // A deliberate New Game is a new run even if a 32-bit map-root
+            // A deliberate New Game is a new run even if a 32-bit map-root [REF#CR-00101]
             // collision happens to match an older bank. Never revive it.
             this.state = makeState({ rootSeed: wantedSeed, now: this.now() });
             const maxRevision = banks.reduce((max, bank) => Math.max(max, Number(bank.state.revision) || 0), 0);
