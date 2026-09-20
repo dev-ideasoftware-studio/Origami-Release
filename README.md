@@ -41,6 +41,12 @@ python3 -m http.server 5500
 Then open:
 
 ```text
+http://127.0.0.1:5500/OrigamiUnderworld.html
+```
+
+(The public build's entry is `OrigamiUnderworld.html`; the older address still forwards there.)
+
+```text
 http://127.0.0.1:5500/NewOrigami.9.html
 ```
 
