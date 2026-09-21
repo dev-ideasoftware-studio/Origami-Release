@@ -1,6 +1,6 @@
 window.GIT_VERSION = {
-    sha:     '138ed5f0b37e00a2784f7172cbc0d711b3b7e2bd',
-    subject: 'Origami Underworld — public release gold-v8.4-2026-09-20-138ed5f0',
+    sha:     '145d88c701b45dbf4fa5888cf9c5072c53790e0b',
+    subject: 'Origami Underworld — public release gold-v8.4-2026-09-20-145d88c7',
     branch:  'release',
-    builtAt: '2026-09-20T20:36:09-05:00',
+    builtAt: '2026-09-20T21:03:13-05:00',
 };
