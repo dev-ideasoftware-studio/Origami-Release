@@ -1,8 +1,8 @@
 Origami Underworld — SC (Secure Codebase) provenance
-Cut 2026-09-21 by the accessibility-safe clean-room pipeline (build.mjs v2).
+Cut 2026-09-22 by the accessibility-safe clean-room pipeline (build.mjs v2).
 
-GOLD BASE: gold-v8.4-2026-09-21-ea2e3159
-GOLD COMMIT: ea2e3159381e1ad78cd2cc38987a4cf412b3cd68
+GOLD BASE: gold-v8.4-2026-09-22-05a829e5
+GOLD COMMIT: 05a829e569a80779c808d552da9d9d554fb7d2d0
 ENTRY: OrigamiUnderworld.html (public v9 cut)
 ARMOR (a11y-safe — NO control-flow/anti-debug/self-defending; protects FPS + screen-reader):
   SC-1 externalize : inline Engine9 module -> engine9.main.js (esbuild bundle)
@@ -12,7 +12,7 @@ ARMOR (a11y-safe — NO control-flow/anti-debug/self-defending; protects FPS + s
                      leak-guard (internal annotations/forensics fingerprints = 0 in dist)
   SC-3.6 json      : _comment* dev-notes stripped from shipped data JSON
   Hardened         : 57 files (0 harden failures)
-  Bridge preserved : 5238 reservedNames / 5639 reservedStrings,
+  Bridge preserved : 5246 reservedNames / 5647 reservedStrings,
                      re-derived from live gold. window._* globals + postMessage protocol + save-keys +
                      card taxonomy (MELEE/RANGED/SPELL/ITEM) are NOT mangled.
   vendor/          : THREE r128 + loaders shipped LOCALLY (offline-capable freeware).
