@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded",()=>{const sk=document.getElementBy
     <script>
 try{const _live=JSON.parse(localStorage.getItem("origami.v8.run.live")||"null");const _sessSeed=sessionStorage.getItem("origami.v8.seed");let _resume=null;const _newRunIntent=sessionStorage.getItem("origami.v8.run.new")==="1";let _windowMs=typeof window._resumeWindowMs==="number"?window._resumeWindowMs:30*60*1e3;try{const _m=parseFloat(localStorage.getItem("origami.v8.resumeWindowMin"));if(_m>0)_windowMs=_m*60*1e3}catch(_){}const _fresh=!!(_live&&typeof _live.at==="number"&&Date.now()-_live.at<=_windowMs);if(!_newRunIntent&&_fresh&&_live&&_live.runId&&_live.rootSeed&&parseInt(_live.floor,10)>=1&&(!_sessSeed||String(_sessSeed)===String(_live.rootSeed))){const _hasSnap=["origami.v8.run.ledger.a","origami.v8.run.ledger.b"].some(k=>{try{const b=JSON.parse(localStorage.getItem(k)||"null");const st=b&&b.state;const f=st&&st.runId===_live.runId&&st.floors&&st.floors[String(_live.floor)];return!!(f&&f.snapshot&&typeof f.snapshot==="object")}catch(_){return false}});if(_hasSnap&&window._resumeOnRefresh===true)_resume=_live;if(_hasSnap&&window._resumeOnRefresh!==true)window._resumeSkipped="disabled"}const _softSec0=!!(_resume&&window._resumeSkipSection0!==false&&parseInt(_resume.seg,10)===0);window._resumeSoft=_softSec0?"section0":null;let _ladder=0;if(_resume&&window._reloadLadder!==false){_ladder=(parseInt(_resume.resumes,10)||0)+1;const _floorAt=typeof window._reloadFloorResetAt==="number"?window._reloadFloorResetAt:2;const _gameAt=typeof window._reloadGameResetAt==="number"?window._reloadGameResetAt:3;if(_ladder>=_gameAt){try{localStorage.removeItem("origami.v8.run.live")}catch(_){}try{sessionStorage.setItem("origami.v8.reloadLadder","game")}catch(_){}window._resumeSkipped="ladder-"+_ladder;_resume=null}else{try{localStorage.setItem("origami.v8.run.live",JSON.stringify(Object.assign({},_live,{resumes:_ladder})))}catch(_){}if(_ladder>=_floorAt||_softSec0){try{sessionStorage.setItem("origami.v8.reloadLadder","floor")}catch(_){}}else{try{sessionStorage.removeItem("origami.v8.reloadLadder")}catch(_){}}}window._reloadLadderStep=_ladder}else if(_resume&&_softSec0){try{sessionStorage.setItem("origami.v8.reloadLadder","floor")}catch(_){}}if(_resume){sessionStorage.setItem("origami.v8.seed",String(_resume.rootSeed));sessionStorage.setItem("origami.v8.resume","1");if(_resume.role)sessionStorage.setItem("origami.v8.role",String(_resume.role));sessionStorage.removeItem("origami.v8.loadSave");sessionStorage.removeItem("origami.v8.descent");window._resumeLive=_resume}else{if(_live){localStorage.removeItem("origami.v8.run.live");window._resumeSkipped=window._resumeSkipped||(_live&&!_fresh?"stale":"unbacked")}if(!sessionStorage.getItem("origami.v8.loadSave")){for(const k of["origami_card_uses","origami_hand_stacks","origami_hand_splits","origami_hand_order","origami_hand_face"]){try{localStorage.removeItem(k)}catch(_){}}}}}catch(_){}try{const _loadPending=!!sessionStorage.getItem("origami.v8.loadSave");if(window._freshSeedOnLoad!==false&&!_loadPending){let seed=0;try{const values=new Uint32Array(1);crypto.getRandomValues(values);seed=values[0]}catch(_){}if(!seed)seed=(Date.now()^Math.floor(Math.random()*4294967295))>>>0||1;sessionStorage.setItem("origami.v8.seed",String(seed));sessionStorage.setItem("origami.v8.run.new","1");sessionStorage.removeItem("origami.v8.run.id");sessionStorage.removeItem("origami.v8.loadSave");sessionStorage.removeItem("origami.v8.descent")}}catch(_){}
 </script>
-    <iframe id="engine-iframe" src="Origami.RealityEngine.9.html?v=8.4.761-stamp" allow="fullscreen" title="Origami 3D Engine Viewport"></iframe>
+    <iframe id="engine-iframe" src="Origami.RealityEngine.9.html?v=8.4.780-suc-ouch-jerksquad" allow="fullscreen" title="Origami 3D Engine Viewport"></iframe>
   </div>
 
   
@@ -101,7 +101,7 @@ function _buildParisDream(stage){if(!stage)return;const W=400,H=820,BASE=792,TOP
 
 
   <div id="ui-viewport" role="main" aria-label="Game interface — panels, guidebook and command box">
-    <iframe id="panels-iframe" src="Origami.RealityEngine.Panels.html?mode=dock&v=8.4.760-laneretry" title="Origami UI Panels"></iframe>
+    <iframe id="panels-iframe" src="Origami.RealityEngine.Panels.html?mode=dock&v=8.4.779-stamp" title="Origami UI Panels"></iframe>
   </div>
 
   
@@ -121,7 +121,7 @@ function _buildParisDream(stage){if(!stage)return;const W=400,H=820,BASE=792,TOP
 </script>
 
   
-  <script defer src="js/data/i18n.js?v=8.4.760-laneretry"></script>
+  <script defer src="js/data/i18n.js?v=8.4.762-attack"></script>
   <script defer src="js/v8/OniBaba8.js?v=8.4.726-stamp"></script>
 
   <script>
