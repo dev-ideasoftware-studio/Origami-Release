@@ -14,16 +14,17 @@ warming in the palm of a hand
 all the way to the stage
 
 4
-00:01:46,040 --> 00:01:49,840
+00:01:05,200 --> 00:01:09,000
 拾った歌
 A song, picked up
 
 5
-00:01:50,440 --> 00:01:54,240
+00:01:09,600 --> 00:01:13,400
 掌で温もる
 warming in the palm of a hand
 
 6
-00:01:54,840 --> 00:01:58,640
+00:01:14,000 --> 00:01:17,800
 舞台まで
 all the way to the stage
+

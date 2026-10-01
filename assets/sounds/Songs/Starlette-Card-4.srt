@@ -14,16 +14,17 @@ and then she says it once more
 until it is heard
 
 4
-00:00:56,800 --> 00:01:00,600
+00:00:40,900 --> 00:00:44,700
 ありがとう
 Thank you, she says
 
 5
-00:01:01,200 --> 00:01:05,000
+00:00:45,300 --> 00:00:49,100
 もう一度言うよ
 and then she says it once more
 
 6
-00:01:05,600 --> 00:01:09,400
+00:00:49,700 --> 00:00:53,500
 聞こえるまで
 until it is heard
+

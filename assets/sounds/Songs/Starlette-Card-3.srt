@@ -24,6 +24,7 @@ Somebody's voice
 asleep at the bottom of a jar
 
 6
-00:01:26,650 --> 00:01:30,450
+00:01:28,750 --> 00:01:32,550
 起こしてよ
 wake it, would you
+

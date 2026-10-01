@@ -156,6 +156,18 @@ function durablePlayer(snapshot) {
     return player;
 }
 
+// SAVE PARTS across the stairs (2026-09-27, the save rebuild — knowledge/design/SAVE_GAME_2026-09-27.md). A part the engine [REF#CR-00166]
+// registered with scope 'run' (source.partScopes) follows the player from the floor being left; every other part stays with
+// its own floor's record, so a revisit gets that floor back as it was left (Mark 2026-09-27: songs and the pet "stay with
+// each floor").
+function carryRunParts(prior, source) {
+    const out = isObject(prior?.parts) ? cloneJson(prior.parts) : {};
+    const scopes = isObject(source?.partScopes) ? source.partScopes : {};
+    const src = isObject(source?.parts) ? source.parts : {};
+    for (const key of Object.keys(src)) if (scopes[key] === 'run') out[key] = cloneJson(src[key]);
+    return out;
+}
+
 function emptySegments() {
     return { active: 0, sealed: [], states: [], stores: {}, broken: [], sectionCleared: [], exitUnlocked: false };
 }
@@ -368,6 +380,8 @@ export class RunLedger {
             magicLanternOn: typeof source.magicLanternOn === 'boolean' ? source.magicLanternOn : !!prior.magicLanternOn,
             monsters: Array.isArray(prior.monsters) ? prior.monsters : [],
             segments: isObject(prior.segments) ? prior.segments : emptySegments(),
+            parts: carryRunParts(prior, source),
+            partScopes: Object.assign({}, isObject(prior.partScopes) ? prior.partScopes : {}, isObject(source.partScopes) ? source.partScopes : {}),
             transition: { fromFloor: from, toFloor: to, direction: direction || 'descend', runId: this.state.runId },
             runLedger: this.exportSnapshot(),
         });
