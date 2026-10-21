@@ -37,7 +37,7 @@
  *
  * BUMPING `CACHE` DROPS EVERY OLD ENTRY — the same one-line ritual, for the same reason.
  */
-const CACHE = "origami-v8-2026-09-30-8.4.1174-micbreath";
+const CACHE = "origami-v8-2026-10-21-public-diagnostics-2741";
 
 // Anything on this list is CODE and must never be served stale while a server can be reached. [REF#CR-00103]
 const _isCode = (url) => /\.(html|js|mjs|json|css)(\?|$)/i.test(url);

@@ -156,7 +156,7 @@ function durablePlayer(snapshot) {
     return player;
 }
 
-// SAVE PARTS across the stairs (2026-09-27, the save rebuild — knowledge/design/SAVE_GAME_2026-09-27.md). A part the engine [REF#CR-00166]
+// SAVE PARTS across the stairs (2026-09-27, the save rebuild — knowledge/design/SAVE_GAME_2026-09-27.md; full system audit — knowledge/design/SAVE_RESTORE_SYSTEM_2026-10-09.md). A part the engine [REF#CR-00166]
 // registered with scope 'run' (source.partScopes) follows the player from the floor being left; every other part stays with
 // its own floor's record, so a revisit gets that floor back as it was left (Mark 2026-09-27: songs and the pet "stay with
 // each floor").
@@ -353,6 +353,17 @@ export class RunLedger {
         this._bindSession();
         const persisted = this._persist(reason, { allowReplace: true });
         return persisted.ok ? { ok: true, snapshot: this.exportSnapshot() } : persisted;
+    }
+
+    // A floor record that must start EMPTY — a realm of the Invading Realms is a new dungeon every trip, so an earlier trip's [REF#CR-00173]
+    // snapshot (its dead monsters, its opened doors) must never be laid over the next one (2026-10-01). Returns whether one existed.
+    resetFloor(floor) {
+        if (!this.state) return false;
+        const id = boundedInt(floor);
+        if (!id || !isObject(this.state.floors[String(id)])) return false;
+        delete this.state.floors[String(id)];
+        this._persist('reset-floor');
+        return true;
     }
 
     makeTransition({ fromFloor, toFloor, direction, sourceSnapshot } = {}) {
